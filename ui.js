@@ -1,4 +1,4 @@
-import { formatTime, StopWatch } from "./stopwatch.js";
+import { formatTime, StopWatch } from "./stopwatches.js";
 
 const materialDesign = {
     className: "material-symbols-outlined",
