@@ -1,19 +1,9 @@
 export const getCurrentTime = Date.now;
 
-export function formatTime(milliseconds) {
-    let d = new Date(milliseconds + (new Date().getTimezoneOffset() * 60 * 1000));
-    function pad(n, length) {
-        n = `${n}`;
-        let len = n.length;
-        return len < length ? "0".repeat(length - len) + n : n;
-    }
-    return [...[d.getHours(), d.getMinutes(), d.getSeconds()].map(n => pad(n, 2)), pad(d.getMilliseconds(), 3)].join(":");
-}
-
 export class StopWatch {
-    constructor(name) {
+    constructor(name, initialTime = 0) {
         this.name = name;
-        this.previousTime = 0;
+        this.previousTime = initialTime;
         this.resumeTime = undefined;
         this.start = this.resume;
         this.stop = this.pause;
