@@ -55,13 +55,14 @@
 }
 
 .iax:hover {
-    border-top: solid;
+    /* border-top: solid; */
     backdrop-filter: invert(70%) opacity(15%) blur(4px);
 }
 
 .iax:active {
-    border-style: double;
-    filter: brightness(0.5);
+    backdrop-filter: invert(70%) opacity(30%) blur(1px);
+    /* border-style: double; */
+    /* filter: brightness(1); */
 }
 
 
@@ -90,8 +91,9 @@
 
 
 * {
-    font-family: 'Cooper Black';
-    border-radius: 0.3rem;
+    font-family: 'Fira Code Retina Medium';
+    /* font-family: 'Cooper Black'; */
+    border-radius: 0.15rem;
 }
 
 #wrapper {
@@ -128,7 +130,7 @@ ul {
 .stopwatch>div,
 #wrapper,
 body {
-    border-radius: 0.5rem;
+    /* border-radius: 0.5rem; */
     text-align: center;
     justify-content: center;
     vertical-align: middle;
@@ -141,7 +143,7 @@ body {
     position: relative;
     width: fit-content;
     height: fit-content;
-    padding: 0.2rem 0.4rem;
+    padding: 0rem 0.4rem;
     margin: 0.2rem 0.2rem;
     background-color: rgba(0, 0, 0, 0.08);
 }
@@ -152,14 +154,16 @@ body {
 }
 
 .stopwatch>div {
-    padding: 0.2rem 0.4rem;
+    padding: 0rem 0.4rem;
     margin: 0rem 0.2rem;
     border-width: 2px;
 }
 
-.stopwatch>div.iax:hover {
+
+
+/* .stopwatch>div.iax:hover {
     padding: calc(0.2rem - 2.2px) 0.4rem;
-}
+} */
 
 .stopwatch>textarea {
     resize: none;

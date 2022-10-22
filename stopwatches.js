@@ -7,7 +7,7 @@ export function formatTime(milliseconds) {
         let len = n.length;
         return len < length ? "0".repeat(length - len) + n : n;
     }
-    return [...[d.getHours(), d.getMinutes(), d.getSeconds()].map(n => pad(n, 2)), pad(d.getMilliseconds(), 4)].join(":");
+    return [...[d.getHours(), d.getMinutes(), d.getSeconds()].map(n => pad(n, 2)), pad(d.getMilliseconds(), 3)].join(":");
 }
 
 export class StopWatch {
