@@ -14,11 +14,11 @@
     font-size: 48px;
 }
 
-
-
 .material-symbols-outlined {
     user-select: none;
 }
+
+
 
 
 
@@ -35,7 +35,6 @@
 }
 
 
-
 .iaa {
     filter: opacity(0.5);
 }
@@ -49,20 +48,16 @@
 }
 
 
-
 .iax {
     border-style: hidden;
 }
 
 .iax:hover {
-    /* border-top: solid; */
     backdrop-filter: invert(70%) opacity(15%) blur(4px);
 }
 
 .iax:active {
     backdrop-filter: invert(70%) opacity(30%) blur(1px);
-    /* border-style: double; */
-    /* filter: brightness(1); */
 }
 
 
@@ -75,7 +70,6 @@
 
 .green {
     color: rgb(164, 255, 164);
-    /* color: rgb(42, 172, 42); */
 }
 
 .blue {
@@ -92,56 +86,53 @@
 
 * {
     font-family: 'Fira Code Retina Medium';
-    /* font-family: 'Cooper Black'; */
     border-radius: 0.15rem;
 }
 
-#wrapper {
-    padding: 0.3rem;
-    background-color: rgba(0, 0, 0, 0.08);
-    margin: auto;
-}
-
-div,
-ul,
-li {
-    width: fit-content;
-    padding: 0.2rem;
-}
-
-ul {
-    margin: 0;
-}
-
-.vl {
-    border-radius: 1rem;
-    border: 1px solid black;
-    background-color: black;
-    opacity: 0.2;
-    height: 1rem;
-    margin: 0px 0.2rem;
-}
-
-
-
-
-
-.stopwatch,
-.stopwatch>div,
-#wrapper,
 body {
-    /* border-radius: 0.5rem; */
-    text-align: center;
-    justify-content: center;
-    vertical-align: middle;
-    align-content: center;
     align-items: center;
 }
 
+#wrapper {
+    background-color: rgba(0, 0, 0, 0.08);
+    align-items: center;
+}
+
+.container {
+    padding: 0.3rem;
+    margin: auto;
+}
+
+
+
+
+
+
+.flex {
+    display: flex;
+}
+
+.left {
+    margin-right: auto;
+}
+
+.right {
+    margin-left: auto;
+}
+
+.middle {
+    margin: auto;
+}
+
+
+
+
+
+
 .stopwatch {
+    align-items: center;
     display: flex;
     position: relative;
-    width: fit-content;
     height: fit-content;
     padding: 0rem 0.4rem;
     margin: 0.2rem 0.2rem;
@@ -153,24 +144,20 @@ body {
     filter: blur(1px);
 }
 
-.stopwatch>div {
+.stopwatch div {
     padding: 0rem 0.4rem;
-    margin: 0rem 0.2rem;
     border-width: 2px;
 }
 
-
-
-/* .stopwatch>div.iax:hover {
-    padding: calc(0.2rem - 2.2px) 0.4rem;
-} */
-
-.stopwatch>textarea {
-    resize: none;
-    overflow: hidden;
-    padding: 0px;
+textarea {
     border-radius: 0.3rem;
     padding: 0.1rem;
+}
+
+.stopwatch>textarea,
+textarea.unresizable {
+    resize: none;
+    overflow: hidden;
 }
 
 .stopwatch-drag-target:hover {

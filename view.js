@@ -1,4 +1,4 @@
-import { StopWatch } from "./model.js";
+import { StopwatchFunction } from "./model.js";
 
 export function formatTime(milliseconds) {
     let d = new Date(milliseconds + (new Date().getTimezoneOffset() * 60 * 1000));
@@ -18,18 +18,53 @@ export const materialDesign = {
         reset: 'history',
         pause: 'pause',
         delete: 'delete',
-        add: 'add_circle'
+        add: 'add_circle',
+        delete_all: 'delete_sweep',
+        pause_all: 'pause_circle',
+        resume_all: 'play_circle',
+        reset_all: 'history',
+        download: 'download',
+        upload: 'upload_file',
+        link: 'link',
+        copy: 'content_copy',
+        paste: 'content_paste',
+        copy_all: 'copy_all',
+        copy_link: 'share'
     }
 }
 
-export function createElement(tag, attributes = null, parent = document.body) {
+export function createElement(tag, { attributes = null, classList = [], parent = document.body, id = null, innerText = null } = {}) {
     /** @type {HTMLElement} */
     let element = document.createElement(tag);
     if (attributes)
         Object.entries(attributes).forEach(entry => element.setAttribute(...entry));
+    if (id)
+        element.id = id;
+    if (classList)
+        element.classList.add(...classList);
     if (parent)
         parent.appendChild(element);
+    if (innerText)
+        element.innerText = innerText;
     return element;
+}
+
+export function downloadText(filename, textContent) {
+    let anchor = createElement('a', { attributes: { href: `data:text/plain;charset=utf-8,${encodeURIComponent(textContent)}`, download: filename } });
+    anchor.click();
+    return anchor;
+}
+
+export async function promptUploadText() {
+    return new Promise((resolve, reject) => {
+        let input = createElement('input', { attributes: { type: 'file' }, parent: null });
+        input.onchange = (event) => {
+            let reader = new FileReader();
+            reader.readAsText(event.target.files[0], 'UTF-8');
+            reader.onload = (readerEvent) => resolve(readerEvent.target.result);
+        }
+        input.click();
+    });
 }
 
 export function getIndexOf(/** @type {HTMLElement} */ element) {
@@ -54,98 +89,168 @@ export function moveElementAmongSiblings(/** @type {HTMLElement} */ element, ind
     insertElementAt(element, element.parentElement, Math.min(element.parentElement.children.length - 1, Math.max(0, getIndexOf(element) + indexOffset)));
 }
 
-export function promptEditText(/** @type {HTMLElement} */ element, onedit = (oldValue, newValue) => true) {
+
+export function createDynamicTextArea({ attributes = null, classList = ['unresizable'], parent = document.body, id = null, initialValue = "", wrap = 'off', disabledKeys = [] } = {}) {
     function getRows(text) {
         return text.split("\n").length;
     }
 
-    let index = getIndexOf(element);
+    let textarea = createElement('textarea', { attributes: { rows: getRows(initialValue), wrap, ...attributes }, classList, parent, id });
+    textarea.value = initialValue;
+
+    textarea.onkeyup = (event) => {
+        textarea.rows = getRows(textarea.value);
+        return true;
+    }
+
+    textarea.onkeydown = (event) => {
+        if (disabledKeys.length && disabledKeys.includes(event.key)) return false;
+        return true;
+    }
+
+    return textarea;
+}
+
+
+export function promptTextInput(/** @type {HTMLInputElement} */ input, onfinish = (value) => true, oncancel = (value) => { }) {
+    function surr(f, event) { return f ? f(event) : true };
+
+    let onkeydown = surr.bind(input, input.onkeydown);
+    let onkeyup = surr.bind(input, input.onkeyup);
+
+    function end(accept) {
+        input.remove();
+        return (accept ? onfinish : oncancel)(input.value);
+    }
+
+    let cancel = end.bind(this, false);
+    let accept = end.bind(this, true);
+
+    input.onkeyup = function (event) {
+        return onkeyup(event);
+    }
+
+    input.onkeydown = function (event) {
+        if (event.key == "Escape") { cancel(); return false; }
+        if (event.ctrlKey && event.key == "Enter") {
+            accept();
+            return false;
+        }
+
+        return onkeydown(event);
+    }
+
+    return { input, end, accept, cancel };
+}
+
+export function hide(/** @type {HTMLElement} */ element) {
     let parent = element.parentElement;
-    let field = createElement("textarea", { rows: getRows(element.innerText), wrap: "off" }, null);
-    field.value = element.innerText;
+    let index = getIndexOf(element);
+    element.remove();
 
-    function swap() {
-        let couple = [field, element];
-        let current = couple.filter(x => !!x.parentElement)[0];
-        let other = couple.filter(x => x != current)[0];
-        current.remove();
-        insertElementAt(other, parent, index);
-        return;
+    function insert(element) {
+        insertElementAt(element, parent, index);
     }
 
-    function finalize() {
-        if (onedit(element.innerText, field.value))
-            element.innerText = field.value;
-        swap();
-        return;
+    function restore() {
+        insert(element);
     }
 
-    field.onkeyup = function (event) {
-        field.rows = getRows(field.value);
-        return;
-    }
-
-    field.onkeydown = function (event) {
-        if (event.key == "Escape") { swap(); return; }
-        if (event.key != "Enter") return;
-        if (!event.ctrlKey) return;
-
-        finalize();
-        return false;
-    }
-
-    swap();
-    return;
+    return { element, index, parent, insert, restore };
 }
 
-export function makeTextEditable(/** @type {HTMLElement} */ element, onedit = (oldValue, newValue) => true) {
-    element.onclick = () => promptEditText(element, onedit);
+export function promptTextInputAt(/** @type {HTMLElement} */ placeholderElement, { onfinish = (value) => true, oncancel = (value) => false, initialValue = '', id = null, attributes = null, classList = ['unresizable'], wrap = 'off', disabledKeys = [] } = {}) {
+    let placeholder = hide(placeholderElement);
+    let input = createDynamicTextArea({ id, attributes, classList, wrap, disabledKeys, initialValue });
+    let end = (f) => {
+        return (value) => {
+            placeholder.restore();
+            return f(value);
+        }
+    }
+    placeholder.insert(input);
+    return { placeholder, prompt: promptTextInput(input, end(onfinish), end(oncancel)) }
 }
 
-export function createMaterialIcon(text, parent = null, additionalAttributes = {}, additionalStyleClasses = []) {
-    let icon = createElement("div", { class: `${materialDesign.className} ${additionalStyleClasses.join(" ")}`, ...additionalAttributes }, parent);
+export function promptEditText(/** @type {HTMLElement} */ element, { onedit = (oldValue, newValue) => true, id = null, attributes = null, classList = ['unresizable'], wrap = 'off', disabledKeys = [] } = {}) {
+    let oldValue = element.innerText;
+    let onfinish = (newValue) => {
+        element.innerText = newValue;
+        return onedit(oldValue, newValue);
+    }
+    let prompt = promptTextInputAt(element, { onfinish, initialValue: oldValue, id, attributes, classList, wrap, disabledKeys });
+
+    return { element, oldValue, prompt };
+}
+
+
+export function makeTextEditable(/** @type {HTMLElement} */ element, onfinish = (oldValue, newValue) => true) {
+    element.onclick = () => promptEditText(element, { onedit: onfinish });
+}
+
+export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div" } = {}) {
+    let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id })
     icon.innerText = text;
     return icon;
 }
 
-export function createStopwatchElement(parent = null, name = "", getTime = () => 0, isActive = () => false, onrename = (newName) => { }, onresume = () => true, onpause = () => true, onreset = () => true, onremove = () => true) {
-    let stopWatchElement = createElement("li", { class: "stopwatch", draggable: false }, parent);
-    let ia = 'ia', iaa = 'iaa', iax = 'iax';
-    let ia1 = [ia, iax];
+const ia = 'ia',
+    iaa = 'iaa',
+    iax = 'iax',
+    green = 'green',
+    yellow = 'yellow',
+    blue = 'blue',
+    red = 'red',
+    left = "left",
+    middle = 'middle',
+    right = 'right',
+    ia_common1 = [iaa, iax],
+    ia_common2 = [ia, iax];
 
-    let dragElement = createMaterialIcon(materialDesign.icons.drag, stopWatchElement, { id: 'drag' }, [iaa, "stopwatch-drag-target"]);
-    let nameElement = createElement("div", { class: iaa + " " + iax, id: 'name' }, stopWatchElement);
-    let timeElement = createElement("div", { id: 'time' }, stopWatchElement);
-    let resetElement = createMaterialIcon(materialDesign.icons.reset, stopWatchElement, { id: 'reset' }, [...ia1, 'yellow']);
-    let resumeElement = createMaterialIcon(materialDesign.icons.play, stopWatchElement, { id: 'resume' }, [...ia1, 'green']);
-    let pauseElement = createMaterialIcon(materialDesign.icons.pause, null, { id: 'pause' }, [...ia1, 'blue']);
-    let deleteElement = createMaterialIcon(materialDesign.icons.delete, stopWatchElement, { id: 'delete' }, [...ia1, 'red']);
+
+export function createStopwatchElement(parent = null, name = "", { getTime = () => 0, isActive = () => false, onrename = (newName) => { }, onresume = () => true, onpause = () => true, onreset = () => true, onremove = () => true, ondownload = () => { } } = {}) {
+    let stopWatchElement = createElement("li", { attributes: { draggable: false }, classList: ["stopwatch"], parent });
+    parent = stopWatchElement;
+
+    let dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: [iaa, "stopwatch-drag-target"], parent });
+    let downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: [iaa], parent })
+
+    let timeElement = createElement("div", { id: 'time', parent, classList: [] });
+    let resetButton = createMaterialIcon(materialDesign.icons.reset, { id: 'reset', classList: [...ia_common2, 'yellow'], parent });
+    let resumeButton = createMaterialIcon(materialDesign.icons.play, { id: 'resume', classList: [...ia_common2, 'green'], parent });
+    let pauseButton = createMaterialIcon(materialDesign.icons.pause, { id: 'pause', classList: [...ia_common2, 'blue'], parent: null });
+
+    let nameElement = createElement("div", { id: 'name', classList: [iaa, iax, left], parent });
+
+    let deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
 
     nameElement.innerText = name;
     makeTextEditable(nameElement, (oldValue, newValue) => onrename(newValue));
 
-    let pausePlayIndex = getIndexOf(resetElement) + 1;
+    let pausePlayIndex = getIndexOf(resetButton) + 1;
     let interval = null;
 
     function updateTime() {
         timeElement.innerText = formatTime(getTime());
     }
 
-    function updatePausePlay() {
+    function updateButtons() {
+        let toBeRemoved, toBeAdded;
         if (isActive()) {
-            resumeElement.remove();
-            insertElementAt(pauseElement, stopWatchElement, pausePlayIndex);
-        } else {
-            pauseElement.remove();
-            insertElementAt(resumeElement, stopWatchElement, pausePlayIndex);
-        }
+            toBeRemoved = resumeButton, toBeAdded = pauseButton;
+        } else
+            toBeRemoved = pauseButton, toBeAdded = resumeButton;
+        if (!(toBeRemoved && toBeAdded && toBeRemoved.parentElement))
+            return;
+        insertElementAt(toBeAdded, toBeRemoved.parentElement, pausePlayIndex);
+        toBeRemoved.remove();
     }
 
     function resume() {
         if (!onresume()) return;
         if (!interval)
             interval = setInterval(() => updateTime(), 1);
-        updatePausePlay();
+        updateButtons();
     }
 
     function pause() {
@@ -153,7 +258,7 @@ export function createStopwatchElement(parent = null, name = "", getTime = () =>
         if (interval)
             clearInterval(interval);
         interval = null;
-        updatePausePlay();
+        updateButtons();
     }
 
     function reset() {
@@ -184,16 +289,152 @@ export function createStopwatchElement(parent = null, name = "", getTime = () =>
         };
     }
 
+    function bindOnClick(element, func) {
+        return element.onclick = () => func();
+    }
 
-    resumeElement.onclick = () => resume();
-    pauseElement.onclick = () => pause();
-    resetElement.onclick = () => reset();
-    deleteElement.onclick = () => remove();
+
+
+    bindOnClick(resumeButton, resume);
+    bindOnClick(pauseButton, pause);
+    bindOnClick(resetButton, reset);
+    bindOnClick(deleteButton, remove);
+    bindOnClick(downloadButton, ondownload);
 
     updateTime();
-
-    return stopWatchElement.StopWatch = { stopWatchElement, dragElement, nameElement, timeElement, resetElement, resumeElement, pauseElement, deleteElement, resume, pause, reset, remove, updateTime, dragEnable };
+    updateButtons();
+    return stopWatchElement.StopWatch = { stopWatchElement, dragElement: dragTargetElement, nameElement, timeElement, resetElement: resetButton, resumeElement: resumeButton, pauseElement: pauseButton, downloadElement: downloadButton, deleteElement: deleteButton, resume, pause, reset, remove, updateTime, dragEnable };
 }
 
-export const stopwatchListElement = document.querySelector('#stopwatches');
-export const addStopwatchButton = document.querySelector('#add');
+
+export class StopwatchElement {
+    constructor(parent = null, name = "", getTime, isActive, { oncopy = () => { }, onrename = (newValue) => { }, onresume = () => true, onpause = () => true, onreset = () => true, ondelete = () => true, ondownload = () => { }, onrearrange = (arr) => { } } = {}) {
+        this.getTime = getTime;
+        this.isActive = isActive;
+        this.onrename = onrename;
+        this.onresume = onresume;
+        this.onpause = onpause;
+        this.onreset = onreset;
+        this.ondelete = ondelete;
+        this.ondownload = ondownload;
+        this.onrearrange = onrearrange;
+        this.oncopy = oncopy;
+
+        this.element = createElement("li", { attributes: { draggable: false }, classList: ["stopwatch"], parent });
+        parent = this.element;
+        this.dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: [iaa, "stopwatch-drag-target"], parent });
+        this.downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: [iaa], parent })
+        this.copyButton = createMaterialIcon(materialDesign.icons.copy, { id: 'copy', classList: [iaa], parent });
+        this.timeElement = createElement("div", { id: 'time', parent, classList: [] });
+        this.resetButton = createMaterialIcon(materialDesign.icons.reset, { id: 'reset', classList: [...ia_common2, 'yellow'], parent });
+        this.resumeButton = createMaterialIcon(materialDesign.icons.play, { id: 'resume', classList: [...ia_common2, 'green'], parent });
+        this.pauseButton = createMaterialIcon(materialDesign.icons.pause, { id: 'pause', classList: [...ia_common2, 'blue'], parent: null });
+        this.nameElement = createElement("div", { id: 'name', innerText: name, classList: [iaa, iax, left], parent });
+        this.deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
+
+        this.pausePlayIndex = getIndexOf(this.resetButton) + 1;
+        this.interval = null;
+
+        makeTextEditable(this.nameElement, (oldValue, newValue) => this.onrename(newValue));
+
+        this.resumeButton.onclick = () => this.onresume();
+        this.pauseButton.onclick = () => this.onpause();
+        this.resetButton.onclick = () => this.onreset();
+        this.deleteButton.onclick = () => this.ondelete();
+        this.downloadButton.onclick = () => this.ondownload();
+        this.copyButton.onclick = () => this.oncopy();
+
+        this.update();
+    }
+
+    get name() {
+        return this.nameElement.innerText;
+    }
+
+    set name(value) {
+        this.nameElement.innerText = value;
+    }
+
+    updateTime() {
+        this.timeElement.innerText = formatTime(this.getTime());
+    }
+
+    updateButtons() {
+        let buttons = [this.pauseButton, this.resumeButton];
+        let toBeAdded = this.isActive() ? this.pauseButton : this.resumeButton;
+        let toBeRemoved = buttons.filter(b => b != toBeAdded)[0];
+
+        if (!(toBeRemoved && toBeAdded && toBeRemoved.parentElement))
+            return;
+
+        insertElementAt(toBeAdded, toBeRemoved.parentElement, this.pausePlayIndex);
+        toBeRemoved.remove();
+    }
+
+    update() {
+        this.updateButtons();
+        this.updateTime();
+    }
+
+    start() {
+        if (!this.interval)
+            this.interval = setInterval(() => this.updateTime(), 1);
+        this.updateButtons();
+    }
+
+    stop() {
+        if (this.interval)
+            clearInterval(this.interval);
+        this.interval = null;
+        this.update();
+    }
+
+    remove() {
+        this.stop();
+        this.element.remove();
+    }
+
+    dragEnable(/** @type {HTMLUListElement} */ list) {
+        self = this;
+        let element = this.element;
+        element.draggable = true;
+
+        element.ondrag = function ({ clientX: x, clientY: y }) {
+            element.classList.add("dragging");
+            let swapTarget = document.elementFromPoint(x, y);
+            if (!swapTarget || list !== swapTarget.parentNode) return;
+            swapTarget = swapTarget !== element.nextSibling ? swapTarget : swapTarget.nextSibling;
+            list.insertBefore(element, swapTarget);
+            return;
+        };
+
+        element.ondragend = function (event) {
+            element.classList.remove("dragging");
+            self.onrearrange(Array.from(list.children));
+        };
+    }
+}
+
+
+export const wrapper = createElement("div", { id: "wrapper", classList: ['container'], parent: document.body });
+
+parent = wrapper;
+export const listElement = createElement("ul", { id: "list", classList: ['container'], parent });
+export const controlsDiv = createElement("div", { id: "controls", classList: ['flex'], parent });
+
+parent = createElement("div", { parent: controlsDiv, id: "add", classList: ['left'] });
+export const createNewStopwatchButton = createMaterialIcon(materialDesign.icons.add, { id: "createNew", classList: ia_common1, parent });
+export const pasteButton = createMaterialIcon(materialDesign.icons.paste, { id: "paste", classList: ia_common1, parent });
+export const uploadButton = createMaterialIcon(materialDesign.icons.upload, { id: 'import', classList: ia_common1, parent });
+
+parent = createElement("div", { parent: controlsDiv, id: "collectiveControl", classList: ['middle'] });
+export const resetAllButton = createMaterialIcon(materialDesign.icons.reset_all, { id: 'resetAll', classList: [...ia_common2, yellow], parent });
+export const resumeAllButton = createMaterialIcon(materialDesign.icons.resume_all, { id: 'resumeAll', classList: [...ia_common2, green], parent });
+export const pauseAllButton = createMaterialIcon(materialDesign.icons.pause_all, { id: 'pauseAll', classList: [...ia_common2, blue], parent });
+export const deleteAllButton = createMaterialIcon(materialDesign.icons.delete_all, { id: 'deleteAll', classList: [...ia_common2, red], parent });
+
+parent = createElement("div", { parent: controlsDiv, id: "export", classList: ['right'] });
+export const linkButton = createMaterialIcon(materialDesign.icons.link, { id: "link", classList: ia_common1, parent });
+export const copyAllButton = createMaterialIcon(materialDesign.icons.copy_all, { id: "copyAll", classList: ia_common1, parent });
+export const copyLinkButton = createMaterialIcon(materialDesign.icons.copy_link, { id: "copyLink", classList: ia_common1, parent });
+export const downloadAllButton = createMaterialIcon(materialDesign.icons.download, { id: "export", classList: ia_common1, parent });

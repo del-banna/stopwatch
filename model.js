@@ -1,6 +1,6 @@
 export const getCurrentTime = Date.now;
 
-export class StopWatch {
+export class StopwatchFunction {
     constructor(name, initialTime = 0) {
         this.name = name;
         this.previousTime = initialTime;
