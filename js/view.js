@@ -49,6 +49,12 @@ export function createElement(tag, { attributes = null, classList = [], parent =
     return element;
 }
 
+export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div" } = {}) {
+    let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id })
+    icon.innerText = text;
+    return icon;
+}
+
 export function downloadText(filename, textContent) {
     let anchor = createElement('a', { attributes: { href: `data:text/plain;charset=utf-8,${encodeURIComponent(textContent)}`, download: filename } });
     anchor.click();
@@ -188,11 +194,7 @@ export function makeTextEditable(/** @type {HTMLElement} */ element, onfinish = 
     element.onclick = () => promptEditText(element, { onedit: onfinish });
 }
 
-export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div" } = {}) {
-    let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id })
-    icon.innerText = text;
-    return icon;
-}
+
 
 const ia = 'ia',
     iaa = 'iaa',
