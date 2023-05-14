@@ -1,1 +1,0 @@
-start /min C:\Python310\python.exe A:\Programming\Javascript\stopwatches\openfile.py %1
