@@ -1,13 +1,32 @@
 import { StopwatchFunction } from "./model.js";
 
+const toMillis = (() => {
+    const milli = 1;
+    const second = 1000 * milli;
+    const minute = 60 * second;
+    const hour = 60 * minute;
+    const day = 24 * hour;
+    return { milli, second, minute, hour, day };
+})();
+
 export function formatTime(milliseconds) {
-    let d = new Date(milliseconds + (new Date().getTimezoneOffset() * 60 * 1000));
+    let flr = Math.floor
+
+    let hours = flr(milliseconds / toMillis.hour);
+    milliseconds -= (toMillis.hour * hours);
+
+    let minutes = flr(milliseconds / toMillis.minute);
+    milliseconds -= (toMillis.minute * minutes);
+
+    let seconds = flr(milliseconds / toMillis.second);
+    milliseconds -= (toMillis.second * seconds);
+
     function pad(n, length) {
-        n = `${n}`;
+        n = '' + n;
         let len = n.length;
         return len < length ? "0".repeat(length - len) + n : n;
     }
-    return [...[d.getHours(), d.getMinutes(), d.getSeconds()].map(n => pad(n, 2)), pad(d.getMilliseconds(), 3)].join(":");
+    return [...[hours, minutes, seconds].map(n => pad(n, 2)), pad(milliseconds, 3)].join(":");
 }
 
 export const materialDesign = {
