@@ -1,0 +1,169 @@
+.md-18 {
+    font-size: 18px;
+}
+
+.md-24 {
+    font-size: 24px;
+}
+
+.md-36 {
+    font-size: 36px;
+}
+
+.md-48 {
+    font-size: 48px;
+}
+
+.material-symbols-outlined {
+    user-select: none;
+}
+
+
+
+
+
+.ia {
+    filter: brightness(0.85);
+}
+
+.ia:hover {
+    filter: brightness(1);
+}
+
+.ia:active {
+    filter: brightness(0.5);
+}
+
+
+.iaa {
+    filter: opacity(0.5);
+}
+
+.iaa:hover {
+    filter: opacity(0.75);
+}
+
+.iaa:active {
+    filter: opacity(1);
+}
+
+
+.iax {
+    border-style: hidden;
+}
+
+.iax:hover {
+    backdrop-filter: invert(70%) opacity(15%) blur(4px);
+}
+
+.iax:active {
+    backdrop-filter: invert(70%) opacity(30%) blur(1px);
+}
+
+
+
+
+
+.red {
+    color: rgb(255, 137, 137);
+}
+
+.green {
+    color: rgb(164, 255, 164);
+}
+
+.blue {
+    color: rgb(121, 121, 255);
+}
+
+.yellow {
+    color: rgb(240, 240, 5);
+}
+
+
+
+
+
+* {
+    font-family: 'Fira Code Retina Medium';
+    border-radius: 0.15rem;
+}
+
+body {
+    align-items: center;
+}
+
+#wrapper {
+    background-color: rgba(0, 0, 0, 0.08);
+    align-items: center;
+}
+
+.container {
+    padding: 0.3rem;
+    margin: auto;
+}
+
+
+
+
+
+
+.flex {
+    display: flex;
+}
+
+.left {
+    margin-right: auto;
+}
+
+.right {
+    margin-left: auto;
+}
+
+.middle {
+    margin: auto;
+}
+
+
+
+
+
+
+.stopwatch {
+    align-items: center;
+    display: flex;
+    position: relative;
+    height: fit-content;
+    padding: 0rem 0.4rem;
+    margin: 0.2rem 0.2rem;
+    background-color: rgba(0, 0, 0, 0.08);
+}
+
+.stopwatch.dragging {
+    border-style: solid;
+    filter: blur(1px);
+}
+
+.stopwatch div {
+    padding: 0rem 0.4rem;
+    border-width: 2px;
+}
+
+textarea {
+    border-radius: 0.3rem;
+    padding: 0.1rem;
+}
+
+.stopwatch>textarea,
+textarea.unresizable {
+    resize: none;
+    overflow: hidden;
+}
+
+.stopwatch-drag-target:hover {
+    cursor: grab;
+}
+
+.stopwatch-drag-target:active {
+    cursor: grabbing;
+}
