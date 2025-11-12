@@ -4,11 +4,13 @@ import traceback
 
 # google chrome directory must be in PATH
 chromePath = "chrome"
-pageURL = "https://skr10s.000webhostapp.com/stopwatches/main"
+pageURL = "https://stopwatch.playground.delbanna.com"
 
-def launch(data:str=None, appMode:bool=True):
+
+def launch(data: str = None, appMode: bool = True):
     arg = f"{'--app=' if appMode else ''}{pageURL}?list={data}"
     subprocess.call([chromePath, arg])
+
 
 if __name__ == "__main__":
     args = sys.argv
@@ -26,9 +28,8 @@ if __name__ == "__main__":
         traceback.print_exc()
         exit()
     appMode = True
-    
+
     if len(args) >= 3:
         appMode = bool(args[2])
-    
-    launch(data, appMode)
 
+    launch(data, appMode)
