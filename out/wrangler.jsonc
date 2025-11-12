@@ -1,8 +1,0 @@
-{
-    "name": "stopwatch",
-    "compatibility_date": "2025-09-13",
-    "assets": {
-        "directory": "./public",
-        "not_found_handling": "single-page-application"
-    }
-}
