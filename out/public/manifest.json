@@ -2,7 +2,7 @@
     "key": "stopwatch",
     "display_name": "Stopwatch",
     "short_name": "Stopwatch",
-    "description": "",
+    "description": "A stopwatch tool built with HTML, CSS, and JavaScript. It allows users to create, manage, and interact with multiple stopwatches individually or collectively, offering functionalities such as starting, pausing, resetting, renaming, and deleting stopwatches. It supports importing/exporting stopwatch data and sharing states via links or files.",
     "start_url": "https://stopwatch.playground.delbanna.com/index.html",
     "cover_image": "https://stopwatch.playground.delbanna.com/assets/cover.png"
 }
