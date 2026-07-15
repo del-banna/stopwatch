@@ -229,105 +229,6 @@ const ia = 'ia',
     ia_common2 = [ia, iax];
 
 
-export function createStopwatchElement(parent = null, name = "", { getTime = () => 0, isActive = () => false, onrename = (newName) => { }, onresume = () => true, onpause = () => true, onreset = () => true, onremove = () => true, ondownload = () => { } } = {}) {
-    let stopWatchElement = createElement("li", { attributes: { draggable: false }, classList: ["stopwatch"], parent });
-    parent = stopWatchElement;
-
-    let dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: [iaa, "stopwatch-drag-target"], parent });
-    let downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: [iaa], parent })
-
-    let timeElement = createElement("div", { id: 'time', parent, classList: [] });
-    let resetButton = createMaterialIcon(materialDesign.icons.reset, { id: 'reset', classList: [...ia_common2, 'yellow'], parent });
-    let resumeButton = createMaterialIcon(materialDesign.icons.play, { id: 'resume', classList: [...ia_common2, 'green'], parent });
-    let pauseButton = createMaterialIcon(materialDesign.icons.pause, { id: 'pause', classList: [...ia_common2, 'blue'], parent: null });
-
-    let nameElement = createElement("div", { id: 'name', classList: [iaa, iax, left], parent });
-
-    let deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
-
-    nameElement.innerText = name;
-    makeTextEditable(nameElement, (oldValue, newValue) => onrename(newValue));
-
-    let pausePlayIndex = getIndexOf(resetButton) + 1;
-    let interval = null;
-
-    function updateTime() {
-        timeElement.innerText = formatTime(getTime());
-    }
-
-    function updateButtons() {
-        let toBeRemoved, toBeAdded;
-        if (isActive()) {
-            toBeRemoved = resumeButton, toBeAdded = pauseButton;
-        } else
-            toBeRemoved = pauseButton, toBeAdded = resumeButton;
-        if (!(toBeRemoved && toBeAdded && toBeRemoved.parentElement))
-            return;
-        insertElementAt(toBeAdded, toBeRemoved.parentElement, pausePlayIndex);
-        toBeRemoved.remove();
-    }
-
-    function resume() {
-        if (!onresume()) return;
-        if (!interval)
-            interval = setInterval(() => updateTime(), 1);
-        updateButtons();
-    }
-
-    function pause() {
-        if (!onpause()) return;
-        if (interval)
-            clearInterval(interval);
-        interval = null;
-        updateButtons();
-    }
-
-    function reset() {
-        if (!onreset()) return;
-        updateTime();
-    }
-
-    function remove() {
-        if (!onremove()) return;
-        pause();
-        stopWatchElement.remove();
-    }
-
-    function dragEnable(/** @type {HTMLUListElement} */ list) {
-        stopWatchElement.draggable = true;
-
-        stopWatchElement.ondrag = function ({ clientX: x, clientY: y }) {
-            stopWatchElement.classList.add("dragging");
-            let swapTarget = document.elementFromPoint(x, y);
-            if (!swapTarget || list !== swapTarget.parentNode) return;
-            swapTarget = swapTarget !== stopWatchElement.nextSibling ? swapTarget : swapTarget.nextSibling;
-            list.insertBefore(stopWatchElement, swapTarget);
-            return;
-        };
-
-        stopWatchElement.ondragend = function (event) {
-            stopWatchElement.classList.remove("dragging");
-        };
-    }
-
-    function bindOnClick(element, func) {
-        return element.onclick = () => func();
-    }
-
-
-
-    bindOnClick(resumeButton, resume);
-    bindOnClick(pauseButton, pause);
-    bindOnClick(resetButton, reset);
-    bindOnClick(deleteButton, remove);
-    bindOnClick(downloadButton, ondownload);
-
-    updateTime();
-    updateButtons();
-    return stopWatchElement.StopWatch = { stopWatchElement, dragElement: dragTargetElement, nameElement, timeElement, resetElement: resetButton, resumeElement: resumeButton, pauseElement: pauseButton, downloadElement: downloadButton, deleteElement: deleteButton, resume, pause, reset, remove, updateTime, dragEnable };
-}
-
-
 export class StopwatchElement {
     constructor(parent = null, name = "", getTime, isActive, { oncopy = () => { }, onrename = (newValue) => { }, onresume = () => true, onpause = () => true, onreset = () => true, ondelete = () => true, ondownload = () => { }, onrearrange = (arr) => { } } = {}) {
         this.getTime = getTime;
@@ -354,7 +255,26 @@ export class StopwatchElement {
         this.deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
 
         this.pausePlayIndex = getIndexOf(this.resetButton) + 1;
-        this.interval = null;
+
+        this.viewUpdateLoop = {
+            active: false,
+            update: () => {
+                // loop
+                requestAnimationFrame(() => {
+                    this.updateView();
+                    if (this.viewUpdateLoop.active)
+                        this.viewUpdateLoop.update();
+                });
+            },
+            start: () => {
+                if (this.viewUpdateLoop.active) return;
+                this.viewUpdateLoop.active = true;
+                this.viewUpdateLoop.update();
+            },
+            stop: () => {
+                this.viewUpdateLoop.active = false;
+            }
+        };
 
         makeTextEditable(this.nameElement, (oldValue, newValue) => this.onrename(newValue));
 
@@ -365,7 +285,7 @@ export class StopwatchElement {
         this.downloadButton.onclick = () => this.ondownload();
         this.copyButton.onclick = () => this.oncopy();
 
-        this.update();
+        this.syncState();
     }
 
     get name() {
@@ -376,7 +296,7 @@ export class StopwatchElement {
         this.nameElement.innerText = value;
     }
 
-    updateTime() {
+    updateTimeDisplay() {
         this.timeElement.innerText = formatTime(this.getTime());
     }
 
@@ -392,22 +312,27 @@ export class StopwatchElement {
         toBeRemoved.remove();
     }
 
-    update() {
+    updateView() {
         this.updateButtons();
-        this.updateTime();
+        this.updateTimeDisplay();
     }
 
+
     start() {
-        if (!this.interval)
-            this.interval = setInterval(() => this.updateTime(), 1);
-        this.updateButtons();
+        this.viewUpdateLoop.start();
     }
 
     stop() {
-        if (this.interval)
-            clearInterval(this.interval);
-        this.interval = null;
-        this.update();
+        this.viewUpdateLoop.stop();
+        this.updateView();
+    }
+
+    syncState() {
+        this.updateView();
+        if (this.isActive())
+            this.start();
+        else
+            this.stop();
     }
 
     remove() {
