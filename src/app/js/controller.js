@@ -76,19 +76,19 @@ class Stopwatch {
         downloadAllButton.onclick = this.setupDownloadListener(downloadAllButton, () => this.list.asJSON());
     }
 
-    static createNew({ name = null, time = 0 } = {}) {
-        return new Stopwatch(name, time);
+    static createNew({ name = null, time = 0, lastResumed = undefined } = {}) {
+        return new Stopwatch(name, time, lastResumed);
     }
 
     static fromJSON(jsonString) {
         return this.createNew(JSON.parse(jsonString));
     }
 
-    constructor(name = null, initialTime = 0) {
+    constructor(name = null, initialTime = 0, lastResumed = undefined) {
         if ([null, undefined].includes(name))
             name = Stopwatch.list.createDefaultName();
 
-        this.model = new StopwatchFunction(name, initialTime);
+        this.model = new StopwatchFunction(name, initialTime, lastResumed);
         let view = this.view = new StopwatchElement(listElement, name, () => this.model.time, () => this.model.isActive);
 
         view.onresume = this.resume.bind(this);
@@ -101,7 +101,8 @@ class Stopwatch {
         view.onrearrange = (arr) => { Stopwatch.list.rearrange(arr) };
         view.dragEnable(listElement);
 
-        Stopwatch.register(this)
+        Stopwatch.register(this);
+
     }
 
     rename(value) {
@@ -122,7 +123,7 @@ class Stopwatch {
 
     reset() {
         this.model.reset();
-        this.view.update();
+        this.view.updateView();
     }
 
     remove() {
@@ -144,7 +145,11 @@ class Stopwatch {
     }
 
     getConstructionObject() {
-        return { name: this.model.name, time: this.model.time };
+        return {
+            name: this.model.name,
+            time: this.model.time,
+            lastResumed: this.model.lastResumed
+        };
     }
 
     toJSON() {
