@@ -1,22 +1,24 @@
 export const getCurrentTime = Date.now;
 
 export class StopwatchFunction {
-    constructor(name, initialTime = 0) {
+    constructor(name, initialTime = 0, lastResumed = undefined) {
         this.name = name;
         this.previousTime = initialTime;
-        this.resumeTime = undefined;
+        this.lastResumed = lastResumed;
+
+        // Method aliases
         this.start = this.resume;
         this.stop = this.pause;
     }
 
     get isActive() {
-        return this.resumeTime != undefined;
+        return this.lastResumed != undefined;
     }
 
     get time() {
         if (!this.isActive)
             return this.previousTime;
-        return this.previousTime + (getCurrentTime() - this.resumeTime);
+        return this.previousTime + (getCurrentTime() - this.lastResumed);
     }
 
     get hasStarted() {
@@ -29,21 +31,21 @@ export class StopwatchFunction {
 
     resume() {
         if (this.isActive) return;
-        this.resumeTime = getCurrentTime();
+        this.lastResumed = getCurrentTime();
         return this;
     }
 
     pause() {
         if (!this.isActive) return;
         this.previousTime = this.time;
-        this.resumeTime = undefined;
+        this.lastResumed = undefined;
         return this;
     }
 
     reset() {
         this.previousTime = 0;
         if (this.isActive)
-            this.resumeTime = getCurrentTime();
+            this.lastResumed = getCurrentTime();
         return this;
     }
 }
