@@ -7,8 +7,10 @@ const fileExtension = '.swljson';
 class Stopwatch {
     /** @type {Stopwatch[]} */
     static list = [];
+    static registeredCount = 0;
 
     static register(...items) {
+        this.registeredCount++;
         return this.list.push(...items);
     }
 
@@ -25,9 +27,16 @@ class Stopwatch {
         const listPrototype = Object.getPrototypeOf(this.list);
 
         listPrototype.createDefaultName = () => {
-            let name = 'new stopwatch';
-            if (this.list.length)
-                name += ` (${this.list.length})`;
+            let baseName = 'new stopwatch';
+            let name = baseName;
+            if (this.registeredCount) {
+                let count = this.registeredCount;
+                name = `${baseName} (${count})`;
+                // If any instance shares the name, increment count until no match is found.
+                while (this.list.some((instance) => instance.model.name === name)) {
+                    name = `${baseName} (${++count})`;
+                };
+            }
             return name;
         }
 
