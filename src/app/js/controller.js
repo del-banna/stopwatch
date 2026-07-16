@@ -1,4 +1,4 @@
-import { listElement, createNewStopwatchButton, StopwatchElement, downloadAllButton, resetAllButton, resumeAllButton, pauseAllButton, deleteAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText } from "./view.js";
+import { listElement, createNewStopwatchButton, StopwatchElement, downloadAllButton, resetAllButton, resumeAllButton, pauseAllButton, deleteAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText, dynamicURLSwitch } from "./view.js";
 import { StopwatchFunction } from "./model.js";
 
 const queryObj = Object.fromEntries(window.location.search.replace('?', '&').split("&").filter(str => !!str).map(str => str.split('=').map(urie => decodeURI(urie))));
@@ -65,20 +65,24 @@ class Stopwatch {
         };
 
         // Import
-        createNewStopwatchButton.onclick = () => new Stopwatch();
-        pasteButton.onclick = () => importFromClipboard();
-        document.onpaste = e => importListFromJSON(e.clipboardData.getData('text'));
-        uploadButton.onclick = () => promptUploadText().then((value) => importListFromJSON(value));
+        createNewStopwatchButton.onclick = Stopwatch.getStateUpdateCallback(() => new Stopwatch());
+        pasteButton.onclick = () => { importFromClipboard().then(() => Stopwatch.onStateUpdate()) };
+        document.onpaste = () => { importFromClipboard().then(() => Stopwatch.onStateUpdate()) };
+        uploadButton.onclick = async () => {
+            const file = await promptUploadText();
+            await importListFromJSON(file);
+            Stopwatch.onStateUpdate();
+        };
 
         // Controls
-        resetAllButton.onclick = i(sw => sw.reset());
-        pauseAllButton.onclick = i(sw => sw.pause());
-        resumeAllButton.onclick = i(sw => sw.resume());
-        deleteAllButton.onclick = i(sw => sw.remove());
+        resetAllButton.onclick = Stopwatch.getStateUpdateCallback(i(sw => sw.reset()));
+        pauseAllButton.onclick = Stopwatch.getStateUpdateCallback(i(sw => sw.pause()));
+        resumeAllButton.onclick = Stopwatch.getStateUpdateCallback(i(sw => sw.resume()));
+        deleteAllButton.onclick = Stopwatch.getStateUpdateCallback(i(sw => sw.remove()));
 
         // Export
-        linkButton.onclick = () => history.pushState({}, null, this.list.asQueryString());
         function copyAll() { navigator.clipboard.writeText(Stopwatch.list.asJSON()) }
+        linkButton.onclick = () => this.updateURL();
         copyAllButton.onclick = () => copyAll();
         document.oncopy = (e) => copyAll();
         copyLinkButton.onclick = () => navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${Stopwatch.list.asQueryString()}`);
@@ -93,25 +97,48 @@ class Stopwatch {
         return this.createNew(JSON.parse(jsonString));
     }
 
+    static updateURL() {
+        history.pushState({}, null, this.list.asQueryString());
+    }
+
+    static onStateUpdate() {
+        if (dynamicURLSwitch.checkboxElement.checked)
+            this.updateURL();
+    }
+
+    static getStateUpdateCallback(updateState = (...args) => { }) {
+        return ((...args) => {
+            updateState(...args);
+            this.onStateUpdate();
+        }).bind(this);
+    }
+
     constructor(name = null, initialTime = 0, lastResumed = undefined) {
         if ([null, undefined].includes(name))
             name = Stopwatch.list.createDefaultName();
 
         this.model = new StopwatchFunction(name, initialTime, lastResumed);
         let view = this.view = new StopwatchElement(listElement, name, () => this.model.time, () => this.model.isActive);
-
-        view.onresume = this.resume.bind(this);
-        view.onpause = () => this.pause();
-        view.onreset = () => this.reset();
-        view.ondelete = () => this.remove();
-        view.ondownload = Stopwatch.setupDownloadListener(view.downloadButton, () => this.asJSONList());
-        view.onrename = (newName) => this.rename(newName);
-        view.oncopy = () => this.copy();
-        view.onrearrange = (arr) => { Stopwatch.list.rearrange(arr) };
         view.dragEnable(listElement);
 
-        Stopwatch.register(this);
+        // Export/save
+        view.ondownload = Stopwatch.setupDownloadListener(view.downloadButton, () => this.asJSONList());
+        view.oncopy = () => this.copy();
 
+        // State Update
+        view.onresume = Stopwatch.getStateUpdateCallback(this.resume.bind(this));
+        view.onpause = Stopwatch.getStateUpdateCallback(this.pause.bind(this));
+        view.onreset = Stopwatch.getStateUpdateCallback(this.reset.bind(this));
+        view.ondelete = Stopwatch.getStateUpdateCallback(this.remove.bind(this));
+        view.onrename = Stopwatch.getStateUpdateCallback(this.rename.bind(this));
+        view.onrearrange = Stopwatch.getStateUpdateCallback(Stopwatch.list.rearrange);
+
+        // Update URL upon the activation of Dynamic URL
+        dynamicURLSwitch.checkboxElement.addEventListener('change', function (e) {
+            if (e.target.checked)
+                Stopwatch.updateURL();
+        });
+        Stopwatch.register(this);
     }
 
     rename(value) {
@@ -179,16 +206,12 @@ function importListFromJSON(json) {
     }
 }
 
-function exportAsURL() {
-
-}
-
 function importFromQuery() {
     return importListFromJSON(queryObj.list);
 }
 
-function importFromClipboard() {
-    navigator.clipboard.readText().then(text => importListFromJSON(text));
+async function importFromClipboard() {
+    return navigator.clipboard.readText().then(text => importListFromJSON(text));
 }
 
 importFromQuery();
