@@ -103,18 +103,10 @@ body {
     margin: auto;
 }
 
-
-
-
-
-
-.flex {
-    display: flex;
-}
-
 .vc-container {
     display: inline-flex;
     align-items: center;
+    gap: 5px;
 }
 
 .left {
@@ -128,6 +120,16 @@ body {
 .middle {
     margin: auto;
 }
+
+.flex {
+    display: flex;
+}
+
+
+
+
+
+
 
 
 
@@ -174,7 +176,7 @@ textarea.unresizable {
 }
 
 .label-default-border {
-    padding: 2px;
+    padding: 0px 5px;
     border: 1px solid black;
     border-radius: 0.5rem;
 }

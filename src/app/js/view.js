@@ -384,6 +384,7 @@ export const pauseAllButton = createMaterialIcon(materialDesign.icons.pause_all,
 export const deleteAllButton = createMaterialIcon(materialDesign.icons.delete_all, { id: 'deleteAll', classList: [...ia_common2, red], parent });
 
 parent = createElement("div", { parent: controlsDiv, id: "export", classList: ['right', 'vc-container'] });
+export const concurrencySwitch = createSwitchElement({ id: "concurrencySwitch", label: "Concurrency", classList: ia_common1, parent });
 export const dynamicURLSwitch = createSwitchElement({ id: "dynamicLinkSwitch", label: "Dynamic URL", classList: ia_common1, parent });
 export const linkButton = createMaterialIcon(materialDesign.icons.link, { id: "link", classList: ia_common1, parent });
 export const copyAllButton = createMaterialIcon(materialDesign.icons.copy_all, { id: "copyAll", classList: ia_common1, parent });
