@@ -172,3 +172,9 @@ textarea.unresizable {
 .stopwatch-drag-target:active {
     cursor: grabbing;
 }
+
+.label-default-border {
+    padding: 2px;
+    border: 1px solid black;
+    border-radius: 0.5rem;
+}
