@@ -69,9 +69,15 @@ export function createElement(tag, { attributes = null, classList = [], parent =
 }
 
 export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div" } = {}) {
-    let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id })
+    let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id });
     icon.innerText = text;
     return icon;
+}
+
+export function createSwitchElement({ label = null, id = null, classList = [], parent = null, attributes = {}, defaultBorder = true } = {}) {
+    const labelElement = createElement("label", { id: `${id}-label`, innerText: label, parent, classList: ["label-default-border", ...classList] });
+    const checkboxElement = createElement('input', { id, classList, parent: labelElement, attributes: { type: "checkbox", ...attributes } });
+    return { labelElement, checkboxElement };
 }
 
 export function downloadText(filename, textContent) {
@@ -368,18 +374,19 @@ parent = wrapper;
 export const listElement = createElement("ul", { id: "list", classList: ['container'], parent });
 export const controlsDiv = createElement("div", { id: "controls", classList: ['flex'], parent });
 
-parent = createElement("div", { parent: controlsDiv, id: "add", classList: ['left'] });
+parent = createElement("div", { parent: controlsDiv, id: "add", classList: ['left', 'vc-container'] });
 export const createNewStopwatchButton = createMaterialIcon(materialDesign.icons.add, { id: "createNew", classList: ia_common1, parent });
 export const pasteButton = createMaterialIcon(materialDesign.icons.paste, { id: "paste", classList: ia_common1, parent });
 export const uploadButton = createMaterialIcon(materialDesign.icons.upload, { id: 'import', classList: ia_common1, parent });
 
-parent = createElement("div", { parent: controlsDiv, id: "collectiveControl", classList: ['middle'] });
+parent = createElement("div", { parent: controlsDiv, id: "collectiveControl", classList: ['middle', 'vc-container'] });
 export const resetAllButton = createMaterialIcon(materialDesign.icons.reset_all, { id: 'resetAll', classList: [...ia_common2, yellow], parent });
 export const resumeAllButton = createMaterialIcon(materialDesign.icons.resume_all, { id: 'resumeAll', classList: [...ia_common2, green], parent });
 export const pauseAllButton = createMaterialIcon(materialDesign.icons.pause_all, { id: 'pauseAll', classList: [...ia_common2, blue], parent });
 export const deleteAllButton = createMaterialIcon(materialDesign.icons.delete_all, { id: 'deleteAll', classList: [...ia_common2, red], parent });
 
-parent = createElement("div", { parent: controlsDiv, id: "export", classList: ['right'] });
+parent = createElement("div", { parent: controlsDiv, id: "export", classList: ['right', 'vc-container'] });
+export const dynamicURLSwitch = createSwitchElement({ id: "dynamicLinkSwitch", label: "Dynamic URL", classList: ia_common1, parent });
 export const linkButton = createMaterialIcon(materialDesign.icons.link, { id: "link", classList: ia_common1, parent });
 export const copyAllButton = createMaterialIcon(materialDesign.icons.copy_all, { id: "copyAll", classList: ia_common1, parent });
 export const copyLinkButton = createMaterialIcon(materialDesign.icons.copy_link, { id: "copyLink", classList: ia_common1, parent });
