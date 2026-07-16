@@ -1,5 +1,3 @@
-import { StopwatchFunction } from "./model.js";
-
 const toMillis = (() => {
     const milli = 1;
     const second = 1000 * milli;
