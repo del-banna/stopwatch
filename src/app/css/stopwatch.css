@@ -112,6 +112,11 @@ body {
     display: flex;
 }
 
+.vc-container {
+    display: inline-flex;
+    align-items: center;
+}
+
 .left {
     margin-right: auto;
 }
@@ -154,7 +159,7 @@ textarea {
     padding: 0.1rem;
 }
 
-.stopwatch>textarea,
+.stopwatch > textarea,
 textarea.unresizable {
     resize: none;
     overflow: hidden;
