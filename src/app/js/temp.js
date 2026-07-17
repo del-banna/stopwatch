@@ -1,6 +1,39 @@
+
 //
-// 
-// 
+// **Re-implement after refactoring
+//
+
+
+//
+// from: class Stopwatch
+//
+
+// static fromJSON(jsonString) {
+//     return this.createNew(JSON.parse(jsonString));
+// }
+
+// State update callback
+// getStateUpdateCallback(updateState = (...args) => { }) {
+//     return ((...args) => {
+//         updateState(...args);
+//         this.onStateUpdate();
+//     }).bind(this);
+// }
+
+// download() {
+//     console.log(this.toJSON());
+// }
+
+// copy() {
+//     return navigator.clipboard.writeText(this.asJSONList());
+// }
+
+//
+//
+//
+
+
+
 
 // Split into different types of imports; strictly list-importing logic belongs in the StopwatchList class...
 function importListFromJSON(json) {
@@ -23,32 +56,8 @@ async function importFromClipboard() {
     return navigator.clipboard.readText().then(text => importListFromJSON(text));
 }
 
-// Should be refactored to accomodate the new changes as a method of the Controller class
-// .updateURL() {
-//     history.pushState({}, null, this.asQueryString());
-// }
-
-
 // All initialization logic and controller logic will be self-contained and organized in the Controller class.
 // Controller class will implement a singleton instance, and it will provide a static initialization method to be invoked to bootstrap everything.
-
-//
-// Initialization
-//
-
-
-
-
-//
-// **Re-implement after refactoring
-//
-
-// **Controller logic
-
-// onStateUpdate() {
-//     if (dynamicURLSwitch.checkboxElement.checked)
-//         this.updateURL();
-// }
 
 
 // Import
@@ -59,8 +68,6 @@ uploadButton.onclick = async () => {
     await importListFromJSON(file);
     listInstance.onStateUpdate();
 };
-// Update this to use the latest list method (computeNextName?)
-createNewStopwatchButton.onclick = list.getStateUpdateCallback(Stopwatch.createNew({ name: list.computeNextInstanceName(), onStateUpdate: () => list.onStateUpdate(), parentList: list }));
 
 importFromQuery();
 
@@ -75,9 +82,63 @@ downloadAllButton.onclick = setupDownloadListener(downloadAllButton, () => listI
 
 
 
-// **This listener belongs in the list view binding class. The list view binding class should expose an aggregate listener for all change events from the list and its individual members
-// Update URL upon the activation of Dynamic URL
-dynamicURLSwitch.checkboxElement.addEventListener('change', function (e) {
-    if (e.target.checked)
-        Stopwatch.updateURL();
-});
+// 
+    // 
+    // 
+    // From: StopwatchList
+    // 
+    // 
+    // 
+
+
+
+    //
+    // Serialization
+    // 
+
+    // Will no longer be relevant
+    // asJSON() {
+    //     return toJSONP(this.internalList.map(sw => sw.getConstructionObject()));
+    // }
+
+    // 
+    // These will no longer be a relevant methods of the list class. It should only be concerned with serializing the list and nothing else. 
+    // 
+    // .asQueryString() {
+    //     return encodeURI(`?list=${this.asJSON()}`);
+    // }
+    // 
+    // .copyAll() {
+    //     navigator.clipboard.writeText(this.asJSON());
+    // }
+    // 
+    //
+
+
+    //
+    // Instance elements
+    // 
+
+    /** */
+
+    /* 
+    This became obsolete after the refactoring. Information about the order of stopwatches should be stored elsewhere.
+    */
+
+    // getStopwatchInstanceByElement(/** @type {HTMLElement} */ element) {
+    //     for (let sw of this.internalMap)
+    //         if (sw.view.element == element)
+    //             return sw;
+    //     return null;
+    // }
+
+    // rearrangeInstanceElements(/** @type {HTMLElement[]} */ elements) {
+    //     let oldValue = this.internalMap;
+    //     this.internalMap = elements.map(element => oldValue.getStopwatchInstanceByElement(element)).filter(sw => !!sw);
+    // }
+
+    // rearrange(/**@type {String[]}*/ ids) {
+
+    // }
+
+    /** */

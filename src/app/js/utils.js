@@ -12,3 +12,10 @@ export function generateHex8() {
     // Convert the 32-bit unsigned integer to a hex string and pad with leading zeros
     return arr[0].toString(16).padStart(8, '0');
 }
+
+export const defaultStateUpdateCbFn = ((name = "", value = undefined) => {
+});
+
+export function pushURL(url) {
+    history.pushState({}, null, url);
+};

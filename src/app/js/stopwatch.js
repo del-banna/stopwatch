@@ -1,9 +1,6 @@
-import { generateHex8 } from "./utils.js";
+import { defaultStateUpdateCbFn, generateHex8 } from "./utils.js";
 
 const getCurrentTime = Date.now;
-
-const defaultStateUpdateCbFn = function (name = "", value = undefined) {
-}
 
 export class Stopwatch {
     /**
@@ -20,34 +17,56 @@ export class Stopwatch {
         lastResumed = undefined,
         onStateUpdate = defaultStateUpdateCbFn,
     ) {
-        this.model = new StopwatchFunction(name, initialTime, lastResumed);
+        this.name = name;
+        this.previousTime = initialTime;
+        this.lastResumed = lastResumed;
         this.onStateUpdate = onStateUpdate;
         this.id = `sw-${generateHex8}-${name}`;
     }
 
-    rename(value) {
-        this.model.rename(value);
-        this.onStateUpdate("rename", value);
+    get active() {
+        return this.lastResumed != undefined;
     }
 
-    pause() {
-        this.model.pause();
-        this.onStateUpdate("pause", false);
+    get time() {
+        if (!this.active)
+            return this.previousTime;
+        return this.previousTime + (getCurrentTime() - this.lastResumed);
     }
 
     resume() {
-        this.model.resume();
-        this.onStateUpdate("resume", true);
+        if (this.active) return;
+        this.lastResumed = getCurrentTime();
+        this.onStateUpdate("resume", undefined);
+        return this;
+    }
+
+    pause() {
+        if (!this.active) return;
+        this.previousTime = this.time;
+        this.lastResumed = undefined;
+        this.onStateUpdate("pause", undefined);
+        return this;
     }
 
     reset() {
-        this.model.reset();
+        this.previousTime = 0;
+        if (this.active)
+            this.lastResumed = getCurrentTime();
         this.onStateUpdate("reset");
+        return this;
+    }
+
+    rename(value) {
+        this.name = name;
+        this.onStateUpdate("rename", value);
+        return this;
     }
 
     remove() {
         this.model.pause();
         this.onStateUpdate("remove");
+        return this;
     }
 
     getConstructionObject() {
@@ -56,80 +75,5 @@ export class Stopwatch {
             time: this.model.time,
             lastResumed: this.model.lastResumed
         };
-    }
-
-
-    // static fromJSON(jsonString) {
-    //     return this.createNew(JSON.parse(jsonString));
-    // }
-
-    // State update callback
-    // getStateUpdateCallback(updateState = (...args) => { }) {
-    //     return ((...args) => {
-    //         updateState(...args);
-    //         this.onStateUpdate();
-    //     }).bind(this);
-    // }
-
-    // download() {
-    //     console.log(this.toJSON());
-    // }
-
-    // copy() {
-    //     return navigator.clipboard.writeText(this.asJSONList());
-    // }
-}
-
-export class StopwatchFunction {
-    constructor(name, initialTime = 0, lastResumed = undefined) {
-        this.name = name;
-        this.previousTime = initialTime;
-        this.lastResumed = lastResumed;
-
-        // Method aliases
-        this.start = this.resume;
-        this.stop = this.pause;
-    }
-
-    get isActive() {
-        return this.lastResumed != undefined;
-    }
-
-    get time() {
-        if (!this.isActive)
-            return this.previousTime;
-        return this.previousTime + (getCurrentTime() - this.lastResumed);
-    }
-
-    get hasStarted() {
-        return this.previousTime > 0 || this.isActive;
-    }
-
-    get hasStopped() {
-        return this.previousTime > 0 && !this.isActive;
-    }
-
-    rename(name) {
-        this.name = name;
-    }
-
-    resume() {
-        if (this.isActive) return;
-        this.lastResumed = getCurrentTime();
-        return this;
-    }
-
-    pause() {
-        if (!this.isActive) return;
-        this.previousTime = this.time;
-        this.lastResumed = undefined;
-        return this;
-    }
-
-    reset() {
-        this.previousTime = 0;
-        if (this.isActive)
-            this.lastResumed = getCurrentTime();
-        return this;
     }
 }
