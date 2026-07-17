@@ -82,10 +82,6 @@ export class StopwatchListBinding {
         resetAllButton.onclick = () => this.stopwatchList.resetAll();
         deleteAllButton.onclick = () => this.stopwatchList.removeAll();
 
-        //Outbound state changes
-        this.stopwatchList.onStateUpdate = function (propertyName, value) {
-        };
-
         return this;
     }
 }
