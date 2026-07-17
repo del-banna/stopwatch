@@ -1,8 +1,15 @@
-import { defaultStateUpdateCbFn, generateHex8 } from "./utils.js";
+import { defaultStateUpdateCbFn, generateHex16, generateHex8 } from "./utils.js";
 
 const getCurrentTime = Date.now;
 
 export class Stopwatch {
+
+    static SCHEMA = {
+        name: { type: "string" },
+        previousTime: { type: "number", required: false, default: 0 },
+        lastResumed: { type: "number", required: false, default: undefined }
+    }
+
     /**
      * @param {*} Object Construction object: An object containing the properties used to construct a new Stopwatch instance.
      * @returns Stopwatch instance.
@@ -13,15 +20,15 @@ export class Stopwatch {
 
     constructor(
         name,
-        initialTime = 0,
+        previousTime = 0,
         lastResumed = undefined,
         onStateUpdate = defaultStateUpdateCbFn,
     ) {
         this.name = name;
-        this.previousTime = initialTime;
+        this.previousTime = previousTime;
         this.lastResumed = lastResumed;
         this.onStateUpdate = onStateUpdate;
-        this.id = `sw-${generateHex8}-${name}`;
+        this.id = `[SW-${generateHex16().toUpperCase()}](${name})`;
     }
 
     get active() {
@@ -37,7 +44,7 @@ export class Stopwatch {
     resume() {
         if (this.active) return;
         this.lastResumed = getCurrentTime();
-        this.onStateUpdate("resume", undefined);
+        this.onStateUpdate("resume");
         return this;
     }
 
@@ -45,7 +52,7 @@ export class Stopwatch {
         if (!this.active) return;
         this.previousTime = this.time;
         this.lastResumed = undefined;
-        this.onStateUpdate("pause", undefined);
+        this.onStateUpdate("pause");
         return this;
     }
 
@@ -57,23 +64,23 @@ export class Stopwatch {
         return this;
     }
 
-    rename(value) {
+    rename(name) {
         this.name = name;
-        this.onStateUpdate("rename", value);
+        this.onStateUpdate("rename", name);
         return this;
     }
 
     remove() {
-        this.model.pause();
+        this.pause();
         this.onStateUpdate("remove");
         return this;
     }
 
     getConstructionObject() {
         return {
-            name: this.model.name,
-            time: this.model.time,
-            lastResumed: this.model.lastResumed
+            name: this.name,
+            previousTime: this.previousTime,
+            lastResumed: this.lastResumed
         };
     }
 }

@@ -1,14 +1,18 @@
 import { defaultStateUpdateCbFn } from "./utils.js";
 
-export class StopwatchConfiguration {
+export class Configuration {
     static DEFAULT_SETTINGS = { dynamicURL: true, concurrency: false };
+    static SCHEMA = {
+        dynamicURL: { type: "boolean", required: false, default: true },
+        concurrency: { type: "boolean", required: false, default: false }
+    }
 
     constructor(
-        settings = StopwatchConfiguration.DEFAULT_SETTINGS,
+        settings = Configuration.DEFAULT_SETTINGS,
         onStateUpdate = defaultStateUpdateCbFn
     ) {
         this.settings = {
-            ...StopwatchConfiguration.DEFAULT_SETTINGS,
+            ...Configuration.DEFAULT_SETTINGS,
             ...settings
         };
         this.onStateUpdate = onStateUpdate;

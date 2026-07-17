@@ -104,6 +104,7 @@ export class StopwatchList {
     removeAll() {
         this.forEach(i => i.remove());
         this.internalMap.clear();
+        this.registeredCount = 0;
 
         this.onStateUpdate("list-clear");
         return this;

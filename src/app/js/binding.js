@@ -1,10 +1,12 @@
 import { defaultStateUpdateCbFn, toJSONP } from "./utils.js";
 import { resumeAllButton, pauseAllButton, resetAllButton, deleteAllButton, StopwatchElement, concurrencySwitch, dynamicURLSwitch } from "./view.js";
-import { StopwatchConfiguration } from "./settings.js";
+import { Configuration } from "./settings.js";
+import { Stopwatch } from "./stopwatch.js";
+import { StopwatchList } from "./stopwatch-list.js";
 
-export class ConfigurationViewBinding {
+export class ConfigurationBinding {
     constructor(
-        /**@type {StopwatchConfiguration} */ configuration,
+        /**@type {Configuration} */ configuration,
         view = { concurrencySwitch, dynamicURLSwitch },
         onStateUpdate = defaultStateUpdateCbFn
     ) {
@@ -16,7 +18,6 @@ export class ConfigurationViewBinding {
     initialize() {
         // Inbound state updates
         this.view.dynamicURLSwitch.checkboxElement.addEventListener('change', (e) => {
-            console.log("test");
             this.configuration.setDynamicURL(e.target.checked);
         });
 
@@ -61,13 +62,14 @@ export class ConfigurationViewBinding {
 //
 //
 
-export class StopwatchListViewBinding {
+export class StopwatchListBinding {
     constructor(
     /**@type {StopwatchList}*/ stopwatchList,
         /**@type {HTMLElement}*/ stopwatchListElement
     ) {
         this.stopwatchList = stopwatchList;
         this.stopwatchListElement = stopwatchListElement;
+
     }
 
     initialize() {
@@ -92,39 +94,58 @@ export class StopwatchListViewBinding {
 //
 //
 
-export class StopwatchViewBinding {
+export class StopwatchBinding {
     // Stopwatch.id : StopwatchListViewBinding
-    /**@type {Map<String, StopwatchViewBinding>} */
+    /**@type {Map<String, StopwatchBinding>} */
     static stopwatchViewBindingMap = new Map();
 
-    static createNew(
-    /**@type {Stopwatch}*/ stopwatch,
-        /**@type {StopwatchListViewBinding}*/ parentListViewBinding
+    static defaultBindingCallback = (/**@type {StopwatchBinding}*/binding) => { };
+
+    static createViewElement(
+        /**@type {Stopwatch} */ stopwatch,
+        /**@type {StopwatchListBinding} */ parentListBinding
     ) {
-        const stopwatchElement = new StopwatchElement(
-            parentListViewBinding.stopwatchListElement,
+        const el = new StopwatchElement(
+            parentListBinding.stopwatchListElement,
             stopwatch.name,
             () => stopwatch.time,
             () => stopwatch.active
         );
 
-        return new StopwatchViewBinding(stopwatch, stopwatchElement, parentListViewBinding);
+        el.dragEnable(parentListBinding.stopwatchListElement);
+        return el;
+    }
+
+    static createNew(
+        /**@type {Stopwatch}*/ stopwatch,
+        /**@type {StopwatchListBinding} */ parentListBinding,
+        onremove = this.defaultBindingCallback,
+        ondownload = this.defaultBindingCallback,
+        oncopy = this.defaultBindingCallback
+    ) {
+        const stopwatchElement = this.createViewElement(stopwatch, parentListBinding);
+        return new StopwatchBinding(stopwatch, stopwatchElement, onremove, ondownload, oncopy);
     }
 
     constructor(
     /**@type {Stopwatch}*/ stopwatch,
         /**@type {StopwatchElement} */ stopwatchViewElement,
-        /**@type {StopwatchListViewBinding}*/ parentListViewBinding
+        onremove = StopwatchBinding.defaultBindingCallback,
+        ondownload = StopwatchBinding.defaultBindingCallback,
+        oncopy = StopwatchBinding.defaultBindingCallback
     ) {
         this.stopwatch = stopwatch;
         this.element = stopwatchViewElement;
-        this.parentListViewBinding = parentListViewBinding;
 
-        StopwatchViewBinding.stopwatchViewBindingMap.set(stopwatch.id, this);
+        this.onremove = onremove;
+        this.ondownload = ondownload;
+        this.oncopy = oncopy;
+
+        StopwatchBinding.stopwatchViewBindingMap.set(stopwatch.id, this);
     }
 
     initialize() {
-        if (!(this.element && this.stopwatch && this.parentListViewBinding))
+        if (!(this.element && this.stopwatch))
             throw new Error(`Cannot activate stopwatch view binding: invalid references. \n\t${toJSONP(this)}`);
 
         let sw = this.stopwatch;
@@ -135,13 +156,12 @@ export class StopwatchViewBinding {
         el.onpause = () => sw.pause();
         el.onreset = () => sw.reset();
         el.onrename = (name) => sw.rename(name);
-        el.ondelete = () => {
-            this.parentListViewBinding.stopwatchList.remove(sw);
-        };
 
-        // el.oncopy = 
+        // Previously assigned listener, if any
+        let onStateUpdateCbFn1 = sw.onStateUpdate;
+
         // Outbound state updates
-        sw.onStateUpdate = (name, value) => {
+        let onStateUpdateCbFn2 = (name, value) => {
             switch (name) {
                 case "pause":
                     el.stop();
@@ -162,7 +182,7 @@ export class StopwatchViewBinding {
                 case "remove":
                     {
                         el.remove();
-                        StopwatchViewBinding.stopwatchViewBindingMap.delete(sw.id);
+                        StopwatchBinding.stopwatchViewBindingMap.delete(sw.id);
                         break;
                     }
 
@@ -171,9 +191,25 @@ export class StopwatchViewBinding {
             }
         };
 
+        // Aggregate listener
+        sw.onStateUpdate = (name, value) => {
+            if (onStateUpdateCbFn1)
+                onStateUpdateCbFn1(name, value);
+            onStateUpdateCbFn2(name, value);
+        }
+
+        // Other events
+        el.ondownload = () => { if (this.ondownload) this.ondownload(this) };
+        el.oncopy = () => { if (this.oncopy) this.oncopy(this) };
+
+        el.ondelete = () => {
+            sw.remove();
+            if (this.onremove)
+                this.onremove(this);
+        };
+
 
         // Ordering
-        // this.element.dragEnable(this.parentListViewBinding.stopwatchListElement);
         this.element.onrearrange = (/**@type {HTMLElement[]}*/ objs) => {
             // Information about the order of stopwatches in a list might be best stored in the stopwatches rather than be implicit.
             // After the refactoring, it is not only technically cumbersome to continue to use implicit array order, it is also unreliable and compels unwieldy workarounds.
@@ -183,11 +219,14 @@ export class StopwatchViewBinding {
             // this.parentList.rearrangeInstanceElements(...args);
         };
 
+        // rearrangeInstanceElements(/** @type {HTMLElement[]} */ elements) {
+        //     let oldValue = this.internalMap;
+        //     this.internalMap = elements.map(element => oldValue.getStopwatchInstanceByElement(element)).filter(sw => !!sw);
+        // }
 
-        // It might be best to decouple the implementation of these from the class using callbacks
-        // Export/save
-        // stopwatchElement.ondownload = setupDownloadListener(stopwatchElement.downloadButton, () => this.asJSONList());
-        // stopwatchElement.oncopy = () => this.copy();
+        // rearrange(/**@type {String[]}*/ ids) {
+
+        // }
         return this;
     }
 }
