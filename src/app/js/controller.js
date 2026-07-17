@@ -1,188 +1,191 @@
-import { listElement, createNewStopwatchButton, StopwatchElement, downloadAllButton, resetAllButton, resumeAllButton, pauseAllButton, deleteAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText } from "./view.js";
-import { StopwatchFunction } from "./model.js";
+import { constructQueryString, decodeBase64Url, encodeBase64Url, initiateNamedDownloadPrompt, parseQueryObject, toJSONP } from "./utils.js";
+import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText, dynamicURLSwitch, concurrencySwitch } from "./view.js";
+import { Stopwatch } from "./stopwatch.js";
+import { StopwatchList } from "./stopwatch-list.js";
+import { StopwatchListBinding, StopwatchBinding, ConfigurationBinding } from "./binding.js";
+import { Configuration } from "./settings.js";
+import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./Data.js";
+import { validateSchema } from "./json-schema.js";
 
-const queryObj = Object.fromEntries(window.location.search.replace('?', '&').split("&").filter(str => !!str).map(str => str.split('=').map(urie => decodeURI(urie))));
-const fileExtension = '.swljson';
 
-class Stopwatch {
-    /** @type {Stopwatch[]} */
-    static list = [];
+//
+// Parameters
+// 
 
-    static register(...items) {
-        return this.list.push(...items);
+export const initialBrowserQueryObj = parseQueryObject();
+export const stopwatchFileExtension = 'swljson';
+
+//
+//
+//
+
+// Orchestrates top-level logic, including StopwatchList instantiation, wiring of view events, configuration loading, top-level serialization and deserialization.
+class Controller {
+    /** @type {Controller} */
+    static instance = null;
+
+    static initialize() {
+        if (this.instance)
+            throw Error("A controller instance already exists!");
+
+        const list = StopwatchList.initialize();
+        const listBinding = new StopwatchListBinding(list, listElement).initialize();
+
+        const configuration = new Configuration(); //defaults; this should be imported if browser query string valid.
+        const configurationBinding = new ConfigurationBinding(
+            configuration,
+            { dynamicURLSwitch, concurrencySwitch }
+        ).initialize();
+
+        const controller = new Controller(
+            configurationBinding,
+            listBinding
+        );
+        this.instance = controller;
+        return controller;
     }
 
-    static unregister(...items) {
-        this.list = this.list.filter(item => !items.includes(item));
-        return this.list.length;
+    constructor(
+        /**@type {ConfigurationBinding} */ configurationBinding,
+        /**@type {StopwatchListBinding} */ listBinding
+    ) {
+        this.configurationBinding = configurationBinding;
+        this.listBinding = listBinding;
+
+        this.configurationBinding.onStateUpdate = (prop, val) => this.onStateUpdate(prop, val);
+        this.listBinding.stopwatchList.onStateUpdate = (prop, val) => this.onStateUpdate(prop, val);
     }
 
-    static setupDownloadListener(/** @type {HTMLElement} */ textPromptPlaceholderElement, getJSON = () => '') {
-        return () => promptTextInputAt(textPromptPlaceholderElement, { onfinish: (value) => downloadText(`${value}${fileExtension}`, getJSON()), disabledKeys: ['Enter'] });
+    onStateUpdate(prop = undefined, val = undefined) {
+        const settings = this.configurationBinding.configuration.settings;
+        if (!settings.concurrency && prop === "resume") {
+            //requires object reference. Must update onStateUpdate to pass it.
+        }
+
+        if (settings.dynamicURL)
+            this.updateBrowserURLDataQuery();
     }
 
-    static {
-        const listPrototype = Object.getPrototypeOf(this.list);
+    createStopwatch({ name = undefined, previousTime = 0, lastResumed = undefined } = {}) {
+        const list = this.listBinding.stopwatchList;
+        const sw = new Stopwatch(name ?? list.computeNextInstanceName(), previousTime, lastResumed, (prop, val) => this.onStateUpdate(prop, val));
+        const swbinding = StopwatchBinding.createNew(
+            sw,
+            this.listBinding,
+            // onremove
+            (binding) => list.remove(binding.stopwatch),
+            // ondownload
+            (binding) => initiateNamedDownloadPrompt(binding.element.downloadButton, toDataObjectJSON(undefined, [binding.stopwatch])),
+            // oncopy
+            (binding) => navigator.clipboard.writeText(toDataObjectJSON(undefined, [binding.stopwatch]))
+        ).initialize();
 
-        listPrototype.createDefaultName = () => {
-            let name = 'new stopwatch';
-            if (this.list.length)
-                name += ` (${this.list.length})`;
-            return name;
-        }
+        list.add(sw);
+        return swbinding;
+    }
 
-        listPrototype.asJSON = () => {
-            return JSON.stringify(this.list.map(sw => sw.getConstructionObject(), undefined, '\t'));
-        }
+    getDataAsJSON() {
+        return toDataObjectJSON(
+            this.configurationBinding.configuration.settings,
+            Array.from(this.listBinding.stopwatchList.internalMap.values())
+        );
+    }
 
-        listPrototype.asQueryString = function () {
-            return encodeURI(`?list=${Stopwatch.list.asJSON()}`);
-        }
+    getDataAsBase64URL() {
+        return encodeBase64Url(this.getDataAsJSON());
+    }
 
-        listPrototype.getByView = (/** @type {HTMLElement} */ element) => {
-            for (let sw of Stopwatch.list)
-                if (sw.view.element == element)
-                    return sw;
+    getDataAsQueryString() {
+        let browserQueryObj = parseQueryObject();
+        browserQueryObj.data = this.getDataAsBase64URL();
+        return constructQueryString(browserQueryObj);
+    }
+
+    initiateFullDataDownload() {
+        initiateNamedDownloadPrompt(downloadAllButton, this.getDataAsJSON(), stopwatchFileExtension);
+    }
+
+    importDataFromJSON(json) {
+        let rawObj = undefined;
+        let validated = undefined;
+        try {
+            rawObj = JSON.parse(json);
+            validated = validateSchema(rawObj, DATA_OBJECT_SCHEMA);
+
+            if (validated.settings) {
+                let previousSettings = this.configurationBinding.configuration.settings;
+                this.configurationBinding.configuration.settings = { ...previousSettings, ...validated.settings };
+                this.configurationBinding.configuration.emitPropertyStateUpdates();
+            }
+
+            if (validated.stopwatches && validated.stopwatches.length) {
+                validated.stopwatches.forEach(swconstructionObj => {
+                    this.createStopwatch(swconstructionObj);
+                });
+            }
+
+            return validated;
+        } catch (err) {
+            console.warn(`Failed to import data from text/json: \n\t${json}`);
+            console.error(err);
             return null;
         }
-
-        listPrototype.rearrange = function (/** @type {HTMLElement[]} */ elements) {
-            let oldValue = Stopwatch.list;
-            Stopwatch.list = elements.map(element => oldValue.getByView(element)).filter(sw => !!sw);
-        }
-
-        function i(f = sw => { }) {
-            return () => Stopwatch.list.forEach(sw => f(sw));
-        };
-
-        // Import
-        createNewStopwatchButton.onclick = () => new Stopwatch();
-        pasteButton.onclick = () => importFromClipboard();
-        document.onpaste = e => importListFromJSON(e.clipboardData.getData('text'));
-        uploadButton.onclick = () => promptUploadText().then((value) => importListFromJSON(value));
-
-        // Controls
-        resetAllButton.onclick = i(sw => sw.reset());
-        pauseAllButton.onclick = i(sw => sw.pause());
-        resumeAllButton.onclick = i(sw => sw.resume());
-        deleteAllButton.onclick = i(sw => sw.remove());
-
-        // Export
-        linkButton.onclick = () => history.pushState({}, null, this.list.asQueryString());
-        function copyAll() { navigator.clipboard.writeText(Stopwatch.list.asJSON()) }
-        copyAllButton.onclick = () => copyAll();
-        document.oncopy = (e) => copyAll();
-        copyLinkButton.onclick = () => navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${Stopwatch.list.asQueryString()}`);
-        downloadAllButton.onclick = this.setupDownloadListener(downloadAllButton, () => this.list.asJSON());
     }
 
-    static createNew({ name = null, time = 0, lastResumed = undefined } = {}) {
-        return new Stopwatch(name, time, lastResumed);
+    importDataFromBase64URL(base64url) {
+        let json = decodeBase64Url(base64url);
+        return this.importDataFromJSON(json);
     }
 
-    static fromJSON(jsonString) {
-        return this.createNew(JSON.parse(jsonString));
+    importDataFromQueryString() {
+        const browserQueryObj = parseQueryObject();
+        if (browserQueryObj.data)
+            return this.importDataFromBase64URL(browserQueryObj.data);
+        return;
     }
 
-    constructor(name = null, initialTime = 0, lastResumed = undefined) {
-        if ([null, undefined].includes(name))
-            name = Stopwatch.list.createDefaultName();
-
-        this.model = new StopwatchFunction(name, initialTime, lastResumed);
-        let view = this.view = new StopwatchElement(listElement, name, () => this.model.time, () => this.model.isActive);
-
-        view.onresume = this.resume.bind(this);
-        view.onpause = () => this.pause();
-        view.onreset = () => this.reset();
-        view.ondelete = () => this.remove();
-        view.ondownload = Stopwatch.setupDownloadListener(view.downloadButton, () => this.asJSONList());
-        view.onrename = (newName) => this.rename(newName);
-        view.oncopy = () => this.copy();
-        view.onrearrange = (arr) => { Stopwatch.list.rearrange(arr) };
-        view.dragEnable(listElement);
-
-        Stopwatch.register(this);
-
+    async importFromClipboard() {
+        return navigator.clipboard.readText().then(json => this.importDataFromJSON(json));
     }
 
-    rename(value) {
-        this.model.name = value;
-        this.view.name = value;
-        console.log(this.model);
+    async initiateDataImportFromFileUpload() {
+        const text = await promptUploadText();
+        return this.importDataFromJSON(text);
     }
 
-    pause() {
-        this.model.pause();
-        this.view.stop();
-    }
-
-    resume() {
-        this.model.resume();
-        this.view.start();
-    }
-
-    reset() {
-        this.model.reset();
-        this.view.updateView();
-    }
-
-    remove() {
-        this.model.pause();
-        this.view.remove();
-        this.unregister();
-    }
-
-    download() {
-        console.log(this.toJSON());
-    }
-
-    copy() {
-        return navigator.clipboard.writeText(this.asJSONList());
-    }
-
-    unregister() {
-        Stopwatch.unregister(this);
-    }
-
-    getConstructionObject() {
-        return {
-            name: this.model.name,
-            time: this.model.time,
-            lastResumed: this.model.lastResumed
-        };
-    }
-
-    toJSON() {
-        return JSON.stringify(this.getConstructionObject(), undefined, "\t");
-    }
-
-    asJSONList() {
-        return JSON.stringify([this.getConstructionObject(), undefined, "\t"]);
+    updateBrowserURLDataQuery() {
+        history.pushState({}, null, this.getDataAsQueryString());
     }
 }
 
-function importListFromJSON(json) {
-    if (!json) return null;
-    try {
-        return JSON.parse(json).map(args => Stopwatch.createNew(args));
-    } catch (error) {
-        return null;
-    }
+const controller = Controller.initialize();
+
+createNewStopwatchButton.onclick = () => controller.createStopwatch();
+
+// 
+// Exports
+// 
+linkButton.onclick = () => controller.updateBrowserURLDataQuery();
+copyAllButton.onclick = () => navigator.clipboard.writeText(controller.getDataAsJSON());
+document.oncopy = copyAllButton.onclick; // On client copy
+copyLinkButton.onclick = () => navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${controller.getDataAsQueryString()}`);
+downloadAllButton.onclick = () => controller.initiateFullDataDownload();
+
+//
+// Imports
+// 
+pasteButton.onclick = () => controller.importFromClipboard();
+document.onpaste = pasteButton.onclick;
+uploadButton.onclick = async () => controller.initiateDataImportFromFileUpload();
+
+
+// Import data from query string upon initialization, if available.
+controller.importDataFromQueryString();
+
+// If nothing is imported, create a single stopwatch by default.
+if (!controller.listBinding.stopwatchList.internalMap.size) {
+    controller.createStopwatch();
 }
 
-function exportAsURL() {
-
-}
-
-function importFromQuery() {
-    return importListFromJSON(queryObj.list);
-}
-
-function importFromClipboard() {
-    navigator.clipboard.readText().then(text => importListFromJSON(text));
-}
-
-importFromQuery();
-
-if (!Stopwatch.list.length)
-    new Stopwatch();
+// Accessible through DOM
+window.controller = controller;

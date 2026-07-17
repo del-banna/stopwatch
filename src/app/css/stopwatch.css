@@ -103,13 +103,10 @@ body {
     margin: auto;
 }
 
-
-
-
-
-
-.flex {
-    display: flex;
+.vc-container {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
 
 .left {
@@ -123,6 +120,16 @@ body {
 .middle {
     margin: auto;
 }
+
+.flex {
+    display: flex;
+}
+
+
+
+
+
+
 
 
 
@@ -154,7 +161,7 @@ textarea {
     padding: 0.1rem;
 }
 
-.stopwatch>textarea,
+.stopwatch > textarea,
 textarea.unresizable {
     resize: none;
     overflow: hidden;
@@ -166,4 +173,10 @@ textarea.unresizable {
 
 .stopwatch-drag-target:active {
     cursor: grabbing;
+}
+
+.label-default-border {
+    padding: 0px 5px;
+    border: 1px solid black;
+    border-radius: 0.5rem;
 }
