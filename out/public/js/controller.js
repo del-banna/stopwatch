@@ -4,7 +4,7 @@ import { Stopwatch } from "./stopwatch.js";
 import { StopwatchList } from "./stopwatch-list.js";
 import { StopwatchListBinding, StopwatchBinding, ConfigurationBinding } from "./binding.js";
 import { Configuration } from "./settings.js";
-import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./Data.js";
+import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./data.js";
 import { validateSchema } from "./json-schema.js";
 
 
