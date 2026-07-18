@@ -212,7 +212,6 @@ export function promptEditText(/** @type {HTMLElement} */ element, { onedit = (o
     return { element, oldValue, prompt };
 }
 
-
 export function makeTextEditable(/** @type {HTMLElement} */ element, onfinish = (oldValue, newValue) => true) {
     element.onclick = () => promptEditText(element, { onedit: onfinish });
 }
@@ -375,8 +374,12 @@ export class StopwatchElement {
     }
 }
 
+// Background sprite
+createElement("div", { id: "bgSprite", classList: ['bg-sprite'], parent: document.body });
 
 export const wrapper = createElement("div", { id: "wrapper", classList: ['container'], parent: document.body });
+
+createElement("hr", { parent: wrapper });
 
 export const controlBar = createElement("div", { id: "controls", classList: ['flex', 'v-margin-5'], parent: wrapper });
 
@@ -404,5 +407,7 @@ export const concurrencySwitch = createSwitchElement({ id: "concurrencySwitch", 
 concurrencySwitch.labelElement.hidden = true; // Feature not yet implemented
 export const dynamicURLSwitch = createSwitchElement({ id: "dynamicLinkSwitch", label: "Dynamic URL", classList: ia_common1, parent: settingsMenu });
 
+
+createElement("hr", { parent: wrapper });
 
 export const listElement = createElement("ul", { id: "list", classList: ['container'], parent: wrapper });
