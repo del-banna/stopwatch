@@ -68,9 +68,15 @@ class Controller {
             this.updateBrowserURLDataQuery();
     }
 
-    createStopwatch({ name = undefined, previousTime = 0, lastResumed = undefined } = {}) {
+    createStopwatch({ name = undefined, previousTime = 0, lastResumed = undefined, index = -1 } = {}) {
         const list = this.listBinding.stopwatchList;
-        const sw = new Stopwatch(name ?? list.computeNextInstanceName(), previousTime, lastResumed, (prop, val) => this.onStateUpdate(prop, val));
+        const sw = Stopwatch.createNew({
+            name: name ?? list.computeNextInstanceName(),
+            previousTime: previousTime,
+            lastResumed: lastResumed,
+            index: Math.max(index, list.computeNextIndex()),
+            onStateUpdate: (prop, val) => this.onStateUpdate(prop, val)
+        })
         const swbinding = StopwatchBinding.createNew(
             sw,
             this.listBinding,
@@ -121,7 +127,7 @@ class Controller {
             }
 
             if (validated.stopwatches && validated.stopwatches.length) {
-                validated.stopwatches.forEach(swconstructionObj => {
+                validated.stopwatches.sort((a, b) => a.index - b.index).forEach(swconstructionObj => {
                     this.createStopwatch(swconstructionObj);
                 });
             }

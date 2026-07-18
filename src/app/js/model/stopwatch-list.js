@@ -129,4 +129,11 @@ export class StopwatchList {
         }
         return name;
     }
+
+    computeNextIndex() {
+        if (this.internalMap.size < 2)
+            return this.internalMap.size;
+        
+        return Math.max(...Array.from(this.internalMap.values()).map(sw => sw.index)) + 1;
+    }
 }

@@ -243,19 +243,19 @@ const ia = 'ia',
 
 
 export class StopwatchElement {
-    constructor(parent = null, name = "", getTime, isActive, { oncopy = () => { }, onrename = (newValue) => { }, onresume = () => true, onpause = () => true, onreset = () => true, ondelete = () => true, ondownload = () => { }, onrearrange = (arr) => { } } = {}) {
+    constructor(parent = null, name = "", getTime, isActive, { id = undefined, oncopy = () => { }, onrename = (newValue) => { }, onresume = () => true, onpause = () => true, onreset = () => true, ondelete = () => true, ondownload = () => { } } = {}) {
         this.getTime = getTime;
         this.isActive = isActive;
+        this.id = id;
         this.onrename = onrename;
         this.onresume = onresume;
         this.onpause = onpause;
         this.onreset = onreset;
         this.ondelete = ondelete;
         this.ondownload = ondownload;
-        this.onrearrange = onrearrange;
         this.oncopy = oncopy;
 
-        this.element = createElement("li", { attributes: { draggable: false }, classList: ["stopwatch"], parent });
+        this.element = createElement("li", { id, attributes: { draggable: false, type: "stopwatch" }, classList: ["stopwatch"], parent });
         parent = this.element;
         this.dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: [iaa, "stopwatch-drag-target"], parent });
         this.downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: [iaa], parent })
@@ -353,7 +353,7 @@ export class StopwatchElement {
         this.element.remove();
     }
 
-    dragEnable(/** @type {HTMLUListElement} */ list) {
+    dragEnable(/** @type {HTMLUListElement} */ list, onrearrange = (/**@type {HTMLElement[]}*/ arr) => { }) {
         self = this;
         let element = this.element;
         element.draggable = true;
@@ -369,7 +369,7 @@ export class StopwatchElement {
 
         element.ondragend = function (event) {
             element.classList.remove("dragging");
-            self.onrearrange(Array.from(list.children));
+            onrearrange(Array.from(list.children));
         };
     }
 }

@@ -65,7 +65,7 @@ export function constructDataObject(
         obj.settings = { ...settings };
     }
     if (stopwatchArray) {
-        obj.stopwatches = [...stopwatchArray.map(s => s.getConstructionObject())];
+        obj.stopwatches = [...stopwatchArray.map(s => s.getConstructionObject())].sort((a, b) => a.index - b.index);
     }
 
     return obj;
@@ -75,9 +75,13 @@ export function toDataObjectJSON(
     /**@type {Object} */ settings = undefined,
     /**@type {Stopwatch[]} */stopwatchArray = undefined
 ) {
-    return toJSONP(constructDataObject(settings, stopwatchArray));
+    return toJSONP(constructDataObject(settings, stopwatchArray.sort((a, b) => a.index - b.index)));
 }
 
 export function parseDataObjectJSON(json) {
-    return validateSchema(JSON.parse(json), DATA_OBJECT_SCHEMA);
+    const obj = validateSchema(JSON.parse(json), DATA_OBJECT_SCHEMA);
+    // Sort the parsed array by index
+    if (!!obj && !!obj.stopwatches)
+        obj.stopwatches = obj.stopwatches.sort((a, b) => a.index - b.index);
+    return obj;
 }

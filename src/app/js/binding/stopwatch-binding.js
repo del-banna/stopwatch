@@ -1,6 +1,7 @@
 import { toJSONP } from "../utils.js";
 import { StopwatchElement } from "../view/view.js";
 import { Stopwatch } from "../model/stopwatch.js";
+import { StopwatchListBinding } from "./stopwatch-list-binding.js";
 
 //
 //
@@ -21,10 +22,9 @@ export class StopwatchBinding {
             parentListBinding.stopwatchListElement,
             stopwatch.name,
             () => stopwatch.time,
-            () => stopwatch.active
+            () => stopwatch.active,
+            { id: stopwatch.id }
         );
-
-        el.dragEnable(parentListBinding.stopwatchListElement);
         return el;
     }
 
@@ -36,7 +36,9 @@ export class StopwatchBinding {
         oncopy = this.defaultBindingCallback
     ) {
         const stopwatchElement = this.createViewElement(stopwatch, parentListBinding);
-        return new StopwatchBinding(stopwatch, stopwatchElement, onremove, ondownload, oncopy);
+        const binding = new StopwatchBinding(stopwatch, stopwatchElement, onremove, ondownload, oncopy);
+        binding.element.dragEnable(parentListBinding.stopwatchListElement, (arr) => parentListBinding?.onrearrange(arr, binding));
+        return binding;
     }
 
     constructor(
@@ -120,23 +122,6 @@ export class StopwatchBinding {
                 this.onremove(this);
         };
 
-
-        // Ordering
-        this.element.onrearrange = (/**@type {HTMLElement[]}*/ objs) => {
-            // Information about the order of stopwatches in a list might be best stored in the stopwatches rather than be implicit.
-            // After the refactoring, it is not only technically cumbersome to continue to use implicit array order, it is also unreliable and compels unwieldy workarounds.
-            // Define an order/index variable in Stopwatch
-            // **OBSOLETE
-            // if (this.parentList)
-            // this.parentList.rearrangeInstanceElements(...args);
-        };
-
-        // rearrangeInstanceElements(/** @type {HTMLElement[]} */ elements) {
-        //     let oldValue = this.internalMap;
-        //     this.internalMap = elements.map(element => oldValue.getStopwatchInstanceByElement(element)).filter(sw => !!sw);
-        // }
-        // rearrange(/**@type {String[]}*/ ids) {
-        // }
         return this;
     }
 }
