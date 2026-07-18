@@ -70,6 +70,10 @@ export class StopwatchList {
         return this;
     }
 
+    getStopwatches() {
+        return Array.from(this.internalMap.values());
+    }
+
     //
     // Iteration and collection operations
     // 
@@ -117,14 +121,22 @@ export class StopwatchList {
     computeNextInstanceName() {
         let baseName = 'new stopwatch';
         let name = baseName;
-        if (this.registeredCount) {
-            let count = this.registeredCount;
-            name = `${baseName} (${count})`;
-            // If any instance shares the name, increment count until no match is found.
-            while (Object.values(this.internalMap).some((instance) => instance.model.name === name)) {
-                name = `${baseName} (${++count})`;
-            };
-        }
+        let count = this.registeredCount - 1;
+
+
+
+        let names = this.getStopwatches().map(sw => sw.name);
+        while (names.some(n => n === name)) {
+            name = `${baseName} (${++count})`;
+        };
+
         return name;
+    }
+
+    computeNextIndex() {
+        if (this.internalMap.size < 2)
+            return this.internalMap.size;
+
+        return Math.max(...Array.from(this.internalMap.values()).map(sw => sw.index)) + 1;
     }
 }
