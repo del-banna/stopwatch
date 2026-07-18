@@ -117,11 +117,13 @@ export class StopwatchList {
     computeNextInstanceName() {
         let baseName = 'new stopwatch';
         let name = baseName;
+
         if (this.registeredCount) {
             let count = this.registeredCount;
             name = `${baseName} (${count})`;
+            let names = Array.from(this.internalMap.values()).map(sw => sw.name);
             // If any instance shares the name, increment count until no match is found.
-            while (Object.values(this.internalMap).some((instance) => instance.model.name === name)) {
+            while (names.some(n => n === name)) {
                 name = `${baseName} (${++count})`;
             };
         }
