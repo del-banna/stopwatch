@@ -1,4 +1,4 @@
-import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, copyLinkButton, dynamicURLSwitch, concurrencySwitch } from "./view/view.js";
+import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, copyLinkButton, dynamicURLSwitch, concurrencySwitch, setTitle, addTitleChangeListener, getTitle } from "./view/view.js";
 import { constructQueryString, decodeBase64Url, encodeBase64Url, parseQueryObject, toJSONP } from "./utils.js";
 import { initiateNamedDownloadPrompt, promptUploadText } from "./view/dom-utils.js";
 import { Stopwatch } from "./model/stopwatch.js";
@@ -17,6 +17,12 @@ import { validateSchema } from "./data/json-schema.js";
 
 export const initialBrowserQueryObj = parseQueryObject();
 export const stopwatchFileExtension = 'swjson';
+export const defaultTitle = "StopwatchJS"
+
+function updateTabTitle(newTitle) {
+    document.title = newTitle;
+    window.history.replaceState(window.history.state, '', window.location.href);
+}
 
 //
 //
@@ -57,6 +63,10 @@ class Controller {
 
         this.configurationBinding.onStateUpdate = (prop, val) => this.onStateUpdate(prop, val);
         this.listBinding.stopwatchList.onStateUpdate = (prop, val) => this.onStateUpdate(prop, val);
+        addTitleChangeListener((newTitle) => {
+            updateTabTitle(newTitle);
+            this.onStateUpdate("title", newTitle);
+        });
     }
 
     onStateUpdate(prop = undefined, val = undefined) {
@@ -95,6 +105,7 @@ class Controller {
 
     getDataAsJSON() {
         return toDataObjectJSON(
+            getTitle(),
             this.configurationBinding.configuration.settings,
             Array.from(this.listBinding.stopwatchList.internalMap.values())
         );
@@ -131,6 +142,12 @@ class Controller {
                 validated.stopwatches.sort((a, b) => a.index - b.index).forEach(swconstructionObj => {
                     this.createStopwatch(swconstructionObj);
                 });
+            }
+
+            if (validated.title) {
+                let title = validated.title;
+                setTitle(title);
+                updateTabTitle(title);
             }
 
             return validated;

@@ -68,7 +68,7 @@ export function createToggleTextBoxElement({ initialText = "", parent = document
 
         function clearListeners() {
             document.removeEventListener('click', clickAwayListener);
-            inputElement.removeEventListener('keydown', keyboardShortcutListener);
+            document.removeEventListener('keydown', keyboardShortcutListener);
         }
 
         function endEdit(accept = true) {
@@ -84,7 +84,7 @@ export function createToggleTextBoxElement({ initialText = "", parent = document
         }
 
         document.addEventListener('click', clickAwayListener);
-        inputElement.addEventListener("keydown", keyboardShortcutListener);
+        document.addEventListener("keydown", keyboardShortcutListener);
     };
 
     return readonlyElement;

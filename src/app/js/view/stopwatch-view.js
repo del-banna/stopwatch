@@ -1,6 +1,6 @@
 import { formatTime } from "../utils.js";
 import { createElement, getIndexOf, makeTextEditable, insertElementAt, createToggleTextBoxElement } from "./dom-utils.js";
-import { materialDesign, createMaterialIcon, iaa, ia_common2, iax, left, right } from "./view.js";
+import { materialDesign, createMaterialIcon, ia_common2 } from "./view.js";
 
 export class StopwatchElement {
     constructor(parent = null, name = "", getTime, isActive, { id = undefined, oncopy = () => { }, onrename = (newValue) => { }, onresume = () => true, onpause = () => true, onreset = () => true, ondelete = () => true, ondownload = () => { } } = {}) {
@@ -17,15 +17,15 @@ export class StopwatchElement {
 
         this.element = createElement("li", { id, attributes: { draggable: false, type: "stopwatch" }, classList: ["stopwatch"], parent });
         parent = this.element;
-        this.dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: [iaa, "stopwatch-drag-target"], parent });
-        this.downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: [iaa], parent });
-        this.copyButton = createMaterialIcon(materialDesign.icons.copy, { id: 'copy', classList: [iaa], parent });
+        this.dragTargetElement = createMaterialIcon(materialDesign.icons.drag, { id: 'drag', classList: ['iaa', "stopwatch-drag-target"], parent });
+        this.downloadButton = createMaterialIcon(materialDesign.icons.download, { id: 'download', classList: ['iaa'], parent });
+        this.copyButton = createMaterialIcon(materialDesign.icons.copy, { id: 'copy', classList: ['iaa'], parent });
         this.timeElement = createElement("div", { id: 'time', parent, classList: [] });
         this.resetButton = createMaterialIcon(materialDesign.icons.reset, { id: 'reset', classList: [...ia_common2, 'yellow'], parent });
         this.resumeButton = createMaterialIcon(materialDesign.icons.play, { id: 'resume', classList: [...ia_common2, 'green'], parent });
         this.pauseButton = createMaterialIcon(materialDesign.icons.pause, { id: 'pause', classList: [...ia_common2, 'blue'], parent: null });
-        this.nameElement = createToggleTextBoxElement({ id: 'name', initialText: name, classList: [iaa, iax, left], parent, onedit: (oldVal, newVal) => { this.onrename(newVal); } });
-        this.deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
+        this.nameElement = createToggleTextBoxElement({ id: 'name', initialText: name, classList: ['iaa', 'iax', 'left'], parent, onedit: (oldVal, newVal) => { this.onrename(newVal); } });
+        this.deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', 'right'], parent });
 
         this.pausePlayIndex = getIndexOf(this.resetButton) + 1;
 

@@ -1,4 +1,4 @@
-import { createElement, createSwitchElement } from "./dom-utils.js";
+import { createElement, createSwitchElement, createToggleTextBoxElement } from "./dom-utils.js";
 
 export const materialDesign = {
     className: "material-symbols-outlined",
@@ -29,18 +29,10 @@ export function createMaterialIcon(text, { attributes = null, classList = [], pa
     return icon;
 }
 
-export const ia = 'ia',
-    iaa = 'iaa',
-    iax = 'iax',
-    green = 'green',
-    yellow = 'yellow',
-    blue = 'blue',
-    red = 'red',
-    left = "left",
-    middle = 'middle',
-    right = 'right',
-    ia_common1 = [iaa, iax],
-    ia_common2 = [ia, iax];
+export const
+    ia_common1 = ['iaa', 'iax'],
+    ia_common2 = ['ia', 'iax'];
+
 
 
 // Background sprite
@@ -48,6 +40,16 @@ createElement("div", { id: "bgSprite", classList: ['bg-sprite'], parent: documen
 
 // Container of list, controls, etc.
 export const wrapper = createElement("div", { id: "wrapper", classList: ['container'], parent: document.body });
+
+const titleBar = createElement("div", { id: "settings", classList: ['flex', 'v-margin-5'], parent: wrapper });
+const titleBox = createElement("div", { id: "settings", classList: ['middle', 'vc-container'], parent: titleBar });
+
+const titleChangeListeners = [];
+export const titleToggleTextBox = createToggleTextBoxElement({
+    id: 'title', initialText: "title", classList: ['iaa', 'middle', 'title'], parent: titleBox, onedit: (oldVal, newVal) => {
+        titleChangeListeners.forEach(l => l(newVal));
+    }
+});
 
 createElement("hr", { parent: wrapper });
 
@@ -59,10 +61,10 @@ export const pasteButton = createMaterialIcon(materialDesign.icons.paste, { id: 
 export const uploadButton = createMaterialIcon(materialDesign.icons.upload, { id: 'import', classList: ia_common1, parent: inboundControlMenu });
 
 const collectionControlMenu = createElement("div", { parent: controlBar, id: "collectiveControl", classList: ['middle', 'vc-container'] });
-export const resetAllButton = createMaterialIcon(materialDesign.icons.reset_all, { id: 'resetAll', classList: [...ia_common2, yellow], parent: collectionControlMenu });
-export const resumeAllButton = createMaterialIcon(materialDesign.icons.resume_all, { id: 'resumeAll', classList: [...ia_common2, green], parent: collectionControlMenu });
-export const pauseAllButton = createMaterialIcon(materialDesign.icons.pause_all, { id: 'pauseAll', classList: [...ia_common2, blue], parent: collectionControlMenu });
-export const deleteAllButton = createMaterialIcon(materialDesign.icons.delete_all, { id: 'deleteAll', classList: [...ia_common2, red], parent: collectionControlMenu });
+export const resetAllButton = createMaterialIcon(materialDesign.icons.reset_all, { id: 'resetAll', classList: [...ia_common2, 'yellow'], parent: collectionControlMenu });
+export const resumeAllButton = createMaterialIcon(materialDesign.icons.resume_all, { id: 'resumeAll', classList: [...ia_common2, 'green'], parent: collectionControlMenu });
+export const pauseAllButton = createMaterialIcon(materialDesign.icons.pause_all, { id: 'pauseAll', classList: [...ia_common2, 'blue'], parent: collectionControlMenu });
+export const deleteAllButton = createMaterialIcon(materialDesign.icons.delete_all, { id: 'deleteAll', classList: [...ia_common2, 'red'], parent: collectionControlMenu });
 
 const outboundControlMenu = createElement("div", { parent: controlBar, id: "export", classList: ['right', 'vc-container'] });
 export const linkButton = createMaterialIcon(materialDesign.icons.link, { id: "link", classList: ia_common1, parent: outboundControlMenu });
@@ -81,3 +83,16 @@ export const dynamicURLSwitch = createSwitchElement({ id: "dynamicLinkSwitch", l
 createElement("hr", { parent: wrapper });
 
 export const listElement = createElement("ul", { id: "list", classList: ['container'], parent: wrapper });
+
+
+export function getTitle() {
+    return titleToggleTextBox.innerText;
+}
+
+export function setTitle(newTitle) {
+    titleToggleTextBox.innerHTML = newTitle;
+}
+
+export function addTitleChangeListener(listener = (newtTitle) => { }) {
+    titleChangeListeners.push(listener);
+}

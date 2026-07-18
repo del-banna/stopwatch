@@ -9,6 +9,7 @@ import { toJSONP } from "../utils.js";
 JSON Object Structure
 
 {
+    "title": "StopwatchJS",
     "settings": {
         "dynamicURL": true,
         "concurrency": false
@@ -39,6 +40,11 @@ Example of a partial import for a single stopwatch:
 */
 
 export const DATA_OBJECT_SCHEMA = {
+    title: {
+        type: "string",
+        required: false,
+        default: "title"
+    },
     settings: {
         type: "object",
         required: false,
@@ -57,10 +63,14 @@ export const DATA_OBJECT_SCHEMA = {
 }
 
 export function constructDataObject(
+    title = undefined,
     /**@type {Object} */settings = undefined,
     /**@type {Stopwatch[]} */stopwatchArray = undefined
 ) {
     const obj = {};
+    if (title) {
+        obj.title = title
+    }
     if (settings) {
         obj.settings = { ...settings };
     }
@@ -72,10 +82,11 @@ export function constructDataObject(
 }
 
 export function toDataObjectJSON(
+    title = undefined,
     /**@type {Object} */ settings = undefined,
     /**@type {Stopwatch[]} */stopwatchArray = undefined
 ) {
-    return toJSONP(constructDataObject(settings, stopwatchArray.sort((a, b) => a.index - b.index)));
+    return toJSONP(constructDataObject(title, settings, stopwatchArray.sort((a, b) => a.index - b.index)));
 }
 
 export function parseDataObjectJSON(json) {
