@@ -379,8 +379,8 @@ export class StopwatchElement {
 export const wrapper = createElement("div", { id: "wrapper", classList: ['container'], parent: document.body });
 
 parent = wrapper;
-export const listElement = createElement("ul", { id: "list", classList: ['container'], parent });
 export const controlsDiv = createElement("div", { id: "controls", classList: ['flex'], parent });
+export const listElement = createElement("ul", { id: "list", classList: ['container'], parent });
 
 parent = createElement("div", { parent: controlsDiv, id: "add", classList: ['left', 'vc-container'] });
 export const createNewStopwatchButton = createMaterialIcon(materialDesign.icons.add, { id: "createNew", classList: ia_common1, parent });
