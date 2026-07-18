@@ -1,11 +1,13 @@
-import { constructQueryString, decodeBase64Url, encodeBase64Url, initiateNamedDownloadPrompt, parseQueryObject, toJSONP } from "./utils.js";
-import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText, dynamicURLSwitch, concurrencySwitch } from "./view.js";
-import { Stopwatch } from "./stopwatch.js";
-import { StopwatchList } from "./stopwatch-list.js";
-import { StopwatchListBinding, StopwatchBinding, ConfigurationBinding } from "./binding.js";
-import { Configuration } from "./settings.js";
-import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./data.js";
-import { validateSchema } from "./json-schema.js";
+import { constructQueryString, decodeBase64Url, encodeBase64Url, parseQueryObject, toJSONP } from "./utils.js";
+import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText, initiateNamedDownloadPrompt, dynamicURLSwitch, concurrencySwitch } from "./view/view.js";
+import { Stopwatch } from "./model/stopwatch.js";
+import { StopwatchList } from "./model/stopwatch-list.js";
+import { StopwatchBinding } from "./binding/stopwatch-binding.js";
+import { StopwatchListBinding } from "./binding/stopwatch-list-binding.js";
+import { ConfigurationBinding } from "./binding/configuration-binding.js";
+import { Configuration } from "./model/configuration.js";
+import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./data/data.js";
+import { validateSchema } from "./data/json-schema.js";
 
 
 //
@@ -13,7 +15,7 @@ import { validateSchema } from "./json-schema.js";
 // 
 
 export const initialBrowserQueryObj = parseQueryObject();
-export const stopwatchFileExtension = 'swljson';
+export const stopwatchFileExtension = 'swjson';
 
 //
 //
@@ -75,7 +77,7 @@ class Controller {
             // onremove
             (binding) => list.remove(binding.stopwatch),
             // ondownload
-            (binding) => initiateNamedDownloadPrompt(binding.element.downloadButton, toDataObjectJSON(undefined, [binding.stopwatch])),
+            (binding) => initiateNamedDownloadPrompt(binding.element.downloadButton, toDataObjectJSON(undefined, [binding.stopwatch]), stopwatchFileExtension),
             // oncopy
             (binding) => navigator.clipboard.writeText(toDataObjectJSON(undefined, [binding.stopwatch]))
         ).initialize();

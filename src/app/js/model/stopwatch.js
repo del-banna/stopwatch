@@ -1,4 +1,4 @@
-import { defaultStateUpdateCbFn, generateHex16, generateHex8 } from "./utils.js";
+import { defaultStateUpdateCbFn, generateHex16, generateHex8 } from "../utils.js";
 
 const getCurrentTime = Date.now;
 

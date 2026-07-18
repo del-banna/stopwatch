@@ -1,90 +1,6 @@
-import { defaultStateUpdateCbFn, toJSONP } from "./utils.js";
-import { resumeAllButton, pauseAllButton, resetAllButton, deleteAllButton, StopwatchElement, concurrencySwitch, dynamicURLSwitch } from "./view.js";
-import { Configuration } from "./settings.js";
-import { Stopwatch } from "./stopwatch.js";
-import { StopwatchList } from "./stopwatch-list.js";
-
-export class ConfigurationBinding {
-    constructor(
-        /**@type {Configuration} */ configuration,
-        view = { concurrencySwitch, dynamicURLSwitch },
-        onStateUpdate = defaultStateUpdateCbFn
-    ) {
-        this.configuration = configuration;
-        this.view = view;
-        this.onStateUpdate = onStateUpdate;
-    }
-
-    initialize() {
-        // Inbound state updates
-        this.view.dynamicURLSwitch.checkboxElement.addEventListener('change', (e) => {
-            this.configuration.setDynamicURL(e.target.checked);
-        });
-
-        this.view.concurrencySwitch.checkboxElement.addEventListener('change', (e) => {
-            this.configuration.setConcurrency(e.target.checked);
-        })
-
-        // Outbound state updates
-        this.configuration.onStateUpdate = (propertyName, value) => {
-            let viewObj = undefined;
-
-            switch (propertyName) {
-                case "dynamicURL":
-                    viewObj = this.view.dynamicURLSwitch;
-                    break;
-
-                case "concurrency":
-                    viewObj = this.view.concurrencySwitch;
-                    break;
-
-                default:
-                    break;
-            }
-
-            if (viewObj) {
-                if (!viewObj.checkboxElement.checked == value)
-                    viewObj.checkboxElement.checked = value;
-            }
-
-            this.onStateUpdate(propertyName, value);
-        };
-
-        // Initial update to sync view
-        this.configuration.emitPropertyStateUpdates();
-
-        return this;
-    }
-}
-
-
-//
-//
-//
-
-export class StopwatchListBinding {
-    constructor(
-    /**@type {StopwatchList}*/ stopwatchList,
-        /**@type {HTMLElement}*/ stopwatchListElement
-    ) {
-        this.stopwatchList = stopwatchList;
-        this.stopwatchListElement = stopwatchListElement;
-
-    }
-
-    initialize() {
-        if (!(this.stopwatchList && this.stopwatchListElement))
-            throw new Error(`Cannot activate list view binding: invalid references. \n\t${toJSONP(this)}`);
-
-        // Inbound UI actions
-        resumeAllButton.onclick = () => this.stopwatchList.resumeAll();
-        pauseAllButton.onclick = () => this.stopwatchList.pauseAll();
-        resetAllButton.onclick = () => this.stopwatchList.resetAll();
-        deleteAllButton.onclick = () => this.stopwatchList.removeAll();
-
-        return this;
-    }
-}
+import { toJSONP } from "../utils.js";
+import { StopwatchElement } from "../view/view.js";
+import { Stopwatch } from "../model/stopwatch.js";
 
 //
 //
@@ -95,10 +11,10 @@ export class StopwatchBinding {
     /**@type {Map<String, StopwatchBinding>} */
     static stopwatchViewBindingMap = new Map();
 
-    static defaultBindingCallback = (/**@type {StopwatchBinding}*/binding) => { };
+    static defaultBindingCallback = (/**@type {StopwatchBinding}*/ binding) => { };
 
     static createViewElement(
-        /**@type {Stopwatch} */ stopwatch,
+    /**@type {Stopwatch} */ stopwatch,
         /**@type {StopwatchListBinding} */ parentListBinding
     ) {
         const el = new StopwatchElement(
@@ -113,7 +29,7 @@ export class StopwatchBinding {
     }
 
     static createNew(
-        /**@type {Stopwatch}*/ stopwatch,
+    /**@type {Stopwatch}*/ stopwatch,
         /**@type {StopwatchListBinding} */ parentListBinding,
         onremove = this.defaultBindingCallback,
         ondownload = this.defaultBindingCallback,
@@ -192,11 +108,11 @@ export class StopwatchBinding {
             if (onStateUpdateCbFn1)
                 onStateUpdateCbFn1(name, value);
             onStateUpdateCbFn2(name, value);
-        }
+        };
 
         // Other events
-        el.ondownload = () => { if (this.ondownload) this.ondownload(this) };
-        el.oncopy = () => { if (this.oncopy) this.oncopy(this) };
+        el.ondownload = () => { if (this.ondownload) this.ondownload(this); };
+        el.oncopy = () => { if (this.oncopy) this.oncopy(this); };
 
         el.ondelete = () => {
             sw.remove();
@@ -219,11 +135,8 @@ export class StopwatchBinding {
         //     let oldValue = this.internalMap;
         //     this.internalMap = elements.map(element => oldValue.getStopwatchInstanceByElement(element)).filter(sw => !!sw);
         // }
-
         // rearrange(/**@type {String[]}*/ ids) {
-
         // }
         return this;
     }
 }
-

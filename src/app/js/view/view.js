@@ -217,7 +217,17 @@ export function makeTextEditable(/** @type {HTMLElement} */ element, onfinish = 
     element.onclick = () => promptEditText(element, { onedit: onfinish });
 }
 
-
+export function initiateNamedDownloadPrompt(
+    /** @type {HTMLElement} */ textPromptAnchorElement,
+    fileTextContent,
+    fileExtension = ".json") {
+    promptTextInputAt(
+        textPromptAnchorElement,
+        {
+            onfinish: (fileName) => downloadText(`${fileName}.${fileExtension}`, fileTextContent),
+            disabledKeys: ['Enter']
+        });
+}
 
 const ia = 'ia',
     iaa = 'iaa',

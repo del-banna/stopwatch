@@ -1,7 +1,7 @@
 import { validateSchema } from "./json-schema.js";
-import { Configuration } from "./settings.js";
-import { Stopwatch } from "./stopwatch.js";
-import { toJSONP } from "./utils.js";
+import { Configuration } from "../model/configuration.js";
+import { Stopwatch } from "../model/stopwatch.js";
+import { toJSONP } from "../utils.js";
 
 
 /*

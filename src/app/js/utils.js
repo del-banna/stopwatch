@@ -1,18 +1,3 @@
-import { stopwatchFileExtension } from "./controller.js";
-import { downloadText, promptTextInputAt } from "./view.js";
-
-export function initiateNamedDownloadPrompt(
-    /** @type {HTMLElement} */ textPromptAnchorElement,
-    fileTextContent,
-    fileExtension = stopwatchFileExtension) {
-    promptTextInputAt(
-        textPromptAnchorElement,
-        {
-            onfinish: (fileName) => downloadText(`${fileName}.${fileExtension}`, fileTextContent),
-            disabledKeys: ['Enter']
-        });
-}
-
 export function toJSONP(obj) {
     return JSON.stringify(obj, undefined, "\t");
 }
