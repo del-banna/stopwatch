@@ -44,12 +44,20 @@ export const wrapper = createElement("div", { id: "wrapper", classList: ['contai
 const titleBar = createElement("div", { id: "settings", classList: ['flex', 'v-margin-5'], parent: wrapper });
 const titleBox = createElement("div", { id: "settings", classList: ['middle', 'vc-container'], parent: titleBar });
 
-const titleChangeListeners = [];
-export const titleToggleTextBox = createToggleTextBoxElement({
+const titleEditListeners = [];
+const titleToggleTextBox = createToggleTextBoxElement({
     id: 'title', initialText: "title", classList: ['iaa', 'middle', 'title'], parent: titleBox, onedit: (oldVal, newVal) => {
-        titleChangeListeners.forEach(l => l(newVal));
+        titleEditListeners.forEach(l => l(oldVal, newVal));
     }
 });
+
+export const titleView = {
+    titleElement: titleToggleTextBox,
+    editListeners: titleEditListeners,
+    getTitle: () => titleView.titleElement.innerText,
+    setTitle: (newTitle) => { titleView.titleElement.innerText = newTitle },
+    addEditListener: (listener = (oldVal, newVal) => { }) => titleView.editListeners.push(listener)
+};
 
 createElement("hr", { parent: wrapper });
 
@@ -76,23 +84,8 @@ export const downloadAllButton = createMaterialIcon(materialDesign.icons.downloa
 const settingsBar = createElement("div", { id: "settings", classList: ['flex', 'v-margin-5'], parent: wrapper });
 const settingsMenu = createElement("div", { id: "settings", classList: ['middle', 'vc-container'], parent: settingsBar });
 export const concurrencySwitch = createSwitchElement({ id: "concurrencySwitch", label: "Concurrency", classList: ia_common1, parent: settingsMenu });
-concurrencySwitch.labelElement.hidden = true; // Feature not yet implemented
 export const dynamicURLSwitch = createSwitchElement({ id: "dynamicLinkSwitch", label: "Dynamic URL", classList: ia_common1, parent: settingsMenu });
-
 
 createElement("hr", { parent: wrapper });
 
 export const listElement = createElement("ul", { id: "list", classList: ['container'], parent: wrapper });
-
-
-export function getTitle() {
-    return titleToggleTextBox.innerText;
-}
-
-export function setTitle(newTitle) {
-    titleToggleTextBox.innerHTML = newTitle;
-}
-
-export function addTitleChangeListener(listener = (newtTitle) => { }) {
-    titleChangeListeners.push(listener);
-}

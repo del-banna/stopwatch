@@ -15,7 +15,7 @@ export class Stopwatch {
      * @param {*} Object Construction object: An object containing the properties used to construct a new Stopwatch instance.
      * @returns Stopwatch instance.
      */
-    static createNew({ name = "stopwatch", previousTime = 0, lastResumed = undefined, index = -1, onStateUpdate = defaultStateUpdateCbFn } = {}) {
+    static createNew({ name = undefined, previousTime = 0, lastResumed = undefined, index = -1, onStateUpdate = defaultStateUpdateCbFn } = {}) {
         return new Stopwatch(name, previousTime, lastResumed, index, onStateUpdate);
     }
 
