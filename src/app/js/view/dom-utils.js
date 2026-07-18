@@ -19,6 +19,77 @@ export function createSwitchElement({ label = null, id = null, classList = [], p
     const checkboxElement = createElement('input', { id, classList, parent: labelElement, attributes: { type: "checkbox", ...attributes } });
     return { labelElement, checkboxElement };
 }
+
+export function createToggleTextBoxElement({ initialText = "", parent = document.body, id = null, classList = [], attributes = null, onedit = (oldValue, newValue) => { }, wrap = 'off', resizeable = false } = {}) {
+    const readonlyElement = createElement("div", { id, parent, classList, attributes, innerText: initialText });
+    let editPending = false;
+
+    // On click, allow user to edit text content
+    readonlyElement.onclick = () => {
+        if (editPending)
+            return;
+
+        editPending = true;
+        let initialValue = readonlyElement.innerText;
+
+        // Create the input element without a parent
+        let inputElClassList = [];
+        if (!resizeable)
+            inputElClassList.push("unresizable");
+        let inputElement = createDynamicTextArea({ id, inputElClassList, wrap, initialValue, attributes });
+
+        // Hide the readonlyElement and substitute it with a helper placeholder
+        let placeholder = hide(readonlyElement);
+
+        // Insert the input element into the placeholder
+        placeholder.insert(inputElement);
+
+
+        // Detect if user clicks outside the text box or other edit-relevant elements
+        const relevantElements = [inputElement, readonlyElement];
+        const clickAwayListener = (event) => {
+            if (!relevantElements.includes(event.target)) {
+                endEdit(true);
+            }
+        }
+
+        // Detect keyboard shortcut activation
+        const keyboardShortcutListener = (event) => {
+            if (event.key == "Escape") {
+                endEdit(false);
+                return;
+            }
+
+            if (event.ctrlKey && event.key == "Enter") {
+                endEdit(true);
+                return;
+            }
+        }
+
+        function clearListeners() {
+            document.removeEventListener('click', clickAwayListener);
+            inputElement.removeEventListener('keydown', keyboardShortcutListener);
+        }
+
+        function endEdit(accept = true) {
+            if (accept) {
+                readonlyElement.innerText = inputElement.value;
+                onedit(initialValue, inputElement.value);
+            }
+
+            clearListeners();
+            inputElement.remove();
+            placeholder.restore();
+            editPending = false;
+        }
+
+        document.addEventListener('click', clickAwayListener);
+        inputElement.addEventListener("keydown", keyboardShortcutListener);
+    };
+
+    return readonlyElement;
+}
+
 export function downloadText(filename, textContent) {
     let anchor = createElement('a', { attributes: { href: `data:text/plain;charset=utf-8,${encodeURIComponent(textContent)}`, download: filename } });
     anchor.click();
@@ -104,6 +175,7 @@ export function promptTextInput(/** @type {HTMLInputElement} */ input, onfinish 
 
     return { input, end, accept, cancel };
 }
+
 export function hide(/** @type {HTMLElement} */ element) {
     let parent = element.parentElement;
     let index = getIndexOf(element);
@@ -119,6 +191,8 @@ export function hide(/** @type {HTMLElement} */ element) {
 
     return { element, index, parent, insert, restore };
 }
+
+
 export function promptTextInputAt(/** @type {HTMLElement} */ anchorElement, { onfinish = (value) => true, oncancel = (value) => false, initialValue = '', id = null, attributes = null, classList = ['unresizable'], wrap = 'off', disabledKeys = [] } = {}) {
     let placeholder = hide(anchorElement);
     let input = createDynamicTextArea({ id, attributes, classList, wrap, disabledKeys, initialValue });
@@ -131,6 +205,8 @@ export function promptTextInputAt(/** @type {HTMLElement} */ anchorElement, { on
     placeholder.insert(input);
     return { placeholder, prompt: promptTextInput(input, end(onfinish), end(oncancel)) };
 }
+
+
 export function promptEditText(/** @type {HTMLElement} */ element, { onedit = (oldValue, newValue) => true, id = null, attributes = null, classList = ['unresizable'], wrap = 'off', disabledKeys = [] } = {}) {
     let oldValue = element.innerText;
     let onfinish = (newValue) => {

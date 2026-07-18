@@ -1,5 +1,5 @@
 import { formatTime } from "../utils.js";
-import { createElement, getIndexOf, makeTextEditable, insertElementAt } from "./dom-utils.js";
+import { createElement, getIndexOf, makeTextEditable, insertElementAt, createToggleTextBoxElement } from "./dom-utils.js";
 import { materialDesign, createMaterialIcon, iaa, ia_common2, iax, left, right } from "./view.js";
 
 export class StopwatchElement {
@@ -24,7 +24,7 @@ export class StopwatchElement {
         this.resetButton = createMaterialIcon(materialDesign.icons.reset, { id: 'reset', classList: [...ia_common2, 'yellow'], parent });
         this.resumeButton = createMaterialIcon(materialDesign.icons.play, { id: 'resume', classList: [...ia_common2, 'green'], parent });
         this.pauseButton = createMaterialIcon(materialDesign.icons.pause, { id: 'pause', classList: [...ia_common2, 'blue'], parent: null });
-        this.nameElement = createElement("div", { id: 'name', innerText: name, classList: [iaa, iax, left], parent });
+        this.nameElement = createToggleTextBoxElement({ id: 'name', initialText: name, classList: [iaa, iax, left], parent, onedit: (oldVal, newVal) => { this.onrename(newVal); } });
         this.deleteButton = createMaterialIcon(materialDesign.icons.delete, { id: 'delete', classList: [...ia_common2, 'red', right], parent });
 
         this.pausePlayIndex = getIndexOf(this.resetButton) + 1;
@@ -48,8 +48,6 @@ export class StopwatchElement {
                 this.viewUpdateLoop.active = false;
             }
         };
-
-        makeTextEditable(this.nameElement, (oldValue, newValue) => this.onrename(newValue));
 
         this.resumeButton.onclick = () => this.onresume();
         this.pauseButton.onclick = () => this.onpause();
