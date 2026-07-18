@@ -101,6 +101,7 @@ body {
 .container {
     padding: 0.3rem;
     margin: auto;
+    gap: 5px;
 }
 
 .vc-container {
@@ -123,6 +124,11 @@ body {
 
 .flex {
     display: flex;
+}
+
+.v-margin-5 {
+    margin-top: 5px;
+    margin-bottom: 5px;
 }
 
 
