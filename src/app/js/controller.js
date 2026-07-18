@@ -1,11 +1,12 @@
+import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, copyLinkButton, dynamicURLSwitch, concurrencySwitch } from "./view/view.js";
 import { constructQueryString, decodeBase64Url, encodeBase64Url, parseQueryObject, toJSONP } from "./utils.js";
-import { listElement, createNewStopwatchButton, downloadAllButton, linkButton, copyAllButton, pasteButton, uploadButton, promptEditText, promptTextInput, createDynamicTextArea, hide, promptTextInputAt, downloadText, copyLinkButton, promptUploadText, initiateNamedDownloadPrompt, dynamicURLSwitch, concurrencySwitch } from "./view/view.js";
+import { initiateNamedDownloadPrompt, promptUploadText } from "./view/dom-utils.js";
 import { Stopwatch } from "./model/stopwatch.js";
 import { StopwatchList } from "./model/stopwatch-list.js";
+import { Configuration } from "./model/configuration.js";
 import { StopwatchBinding } from "./binding/stopwatch-binding.js";
 import { StopwatchListBinding } from "./binding/stopwatch-list-binding.js";
 import { ConfigurationBinding } from "./binding/configuration-binding.js";
-import { Configuration } from "./model/configuration.js";
 import { DATA_OBJECT_SCHEMA, toDataObjectJSON } from "./data/data.js";
 import { validateSchema } from "./data/json-schema.js";
 
