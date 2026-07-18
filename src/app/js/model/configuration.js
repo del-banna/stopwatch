@@ -1,4 +1,4 @@
-import { defaultStateUpdateCbFn } from "./utils.js";
+import { defaultStateUpdateCbFn } from "../utils.js";
 
 export class Configuration {
     static DEFAULT_SETTINGS = { dynamicURL: true, concurrency: false };
