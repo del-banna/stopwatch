@@ -16,6 +16,7 @@
 
 .material-symbols-outlined {
     user-select: none;
+    text-shadow: 0 0 4px rgba(28, 25, 25, 0.25);
 }
 
 

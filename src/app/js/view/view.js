@@ -23,7 +23,7 @@ export const materialDesign = {
     }
 };
 
-export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div" } = {}) {
+export function createMaterialIcon(text, { attributes = null, classList = [], parent = null, id = null, tag = "div", shadow = true } = {}) {
     let icon = createElement(tag, { attributes, classList: [materialDesign.className, ...classList], parent, id });
     icon.innerText = text;
     return icon;

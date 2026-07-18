@@ -1,5 +1,5 @@
 import { toJSONP } from "../utils.js";
-import { StopwatchElement } from "../view/dom-stopwatch.js";
+import { StopwatchElement } from "../view/stopwatch-view.js";
 import { Stopwatch } from "../model/stopwatch.js";
 import { StopwatchListBinding } from "./stopwatch-list-binding.js";
 
